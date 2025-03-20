@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if customer %}Editar{% else %}Nuevo{% endif %} Cliente | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:customer_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver a Clientes
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">{% if customer %}Editar{% else %}Nuevo{% endif %} Cliente</h1>
+        <p class="text-muted">{% if customer %}Actualiza la información del cliente.{% else %}Registra un nuevo cliente en el sistema.{% endif %}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Información del Cliente</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">Error al guardar</h5>
+                        <p class="mb-0">Por favor corrija los errores indicados a continuación.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Nombre*</label>
+                            {{ form.name|add_class:"form-control" }}
+                            {% if form.name.errors %}
+                            <div class="text-danger mt-1">
+                                <small>{{ form.name.errors|join:", " }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.tax_id.id_for_label }}" class="form-label">NIF/CIF</label>
+                            {{ form.tax_id|add_class:"form-control" }}
+                            {% if form.tax_id.errors %}
+                            <div class="text-danger mt-1">
+                                <small>{{ form.tax_id.errors|join:", " }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">Teléfono</label>
+                            {{ form.phone|add_class:"form-control" }}
+                            {% if form.phone.errors %}
+                            <div class="text-danger mt-1">
+                                <small>{{ form.phone.errors|join:", " }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.email|add_class:"form-control" }}
+                            {% if form.email.errors %}
+                            <div class="text-danger mt-1">
+                                <small>{{ form.email.errors|join:", " }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">Dirección</label>
+                        {{ form.address|add_class:"form-control" }}
+                        {% if form.address.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.address.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notas</label>
+                        {{ form.notes|add_class:"form-control" }}
+                        {% if form.notes.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.notes.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Foto del Cliente</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'pos:customer_update_photo' customer.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="text-center mb-3">
+                        {% if customer.photo %}
+                        <img src="{{ customer.photo.url }}" alt="{{ customer.name }}" class="rounded-circle img-thumbnail mb-3" style="width: 150px; height: 150px;">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center mb-3 rounded-circle" style="width: 150px; height: 150px; margin: 0 auto;">
+                            <i class="fas fa-user text-secondary" style="font-size: 64px;"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Seleccionar Imagen</label>
+                            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Actualizar Foto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if customer %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'pos:point_of_sale' %}?customer={{ customer.id }}" class="btn btn-success">
+                        <i class="fas fa-shopping-cart me-2"></i>Nueva Venta
+                    </a>
+                    <a href="{% url 'pos:customer_detail' customer.id %}" class="btn btn-info">
+                        <i class="fas fa-eye me-2"></i>Ver Detalle
+                    </a>
+                </div>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <h6 class="mb-2">Estadísticas</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-1 fw-bold">{{ customer.sales.count }}</p>
+                            <p class="text-muted small">Compras</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1 fw-bold">${{ customer.total_spent|floatformat:2 }}</p>
+                            <p class="text-muted small">Total</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Configuración | POS System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Configuración del Sistema</h1>
+        <p class="text-muted">Gestiona la configuración y personalización del sistema POS.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="list-group">
+            <a href="#general" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                <i class="fas fa-cog me-2"></i>General
+            </a>
+            <a href="#company" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-building me-2"></i>Información de la Empresa
+            </a>
+            <a href="#receipt" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-receipt me-2"></i>Configuración de Recibos
+            </a>
+            <a href="#taxes" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-percentage me-2"></i>Impuestos
+            </a>
+            <a href="#backup" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-database me-2"></i>Copias de Seguridad
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-lg-9">
+        <div class="tab-content">
+            <!-- Configuración General -->
+            <div class="tab-pane fade show active" id="general">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configuración General</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'pos:save_settings' 'general' %}">
+                            {% csrf_token %}
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="language" class="form-label">Idioma</label>
+                                    <select class="form-select" id="language" name="language">
+                                        <option value="es" {% if settings.language == 'es' %}selected{% endif %}>Español</option>
+                                        <option value="en" {% if settings.language == 'en' %}selected{% endif %}>English</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="currency" class="form-label">Moneda</label>
+                                    <select class="form-select" id="currency" name="currency">
+                                        <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>Dólar (USD)</option>
+                                        <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>Euro (EUR)</option>
+                                        <option value="MXN" {% if settings.currency == 'MXN' %}selected{% endif %}>Peso Mexicano (MXN)</option>
+                                        <option value="COP" {% if settings.currency == 'COP' %}selected{% endif %}>Peso Colombiano (COP)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="date_format" class="form-label">Formato de Fecha</label>
+                                    <select class="form-select" id="date_format" name="date_format">
+                                        <option value="d/m/Y" {% if settings.date_format == 'd/m/Y' %}selected{% endif %}>DD/MM/YYYY</option>
+                                        <option value="m/d/Y" {% if settings.date_format == 'm/d/Y' %}selected{% endif %}>MM/DD/YYYY</option>
+                                        <option value="Y-m-d" {% if settings.date_format == 'Y-m-d' %}selected{% endif %}>YYYY-MM-DD</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="timezone" class="form-label">Zona Horaria</label>
+                                    <select class="form-select" id="timezone" name="timezone">
+                                        <option value="America/Mexico_City" {% if settings.timezone == 'America/Mexico_City' %}selected{% endif %}>Ciudad de México (GMT-6)</option>
+                                        <option value="America/Bogota" {% if settings.timezone == 'America/Bogota' %}selected{% endif %}>Bogotá (GMT-5)</option>
+                                        <option value="America/New_York" {% if settings.timezone == 'America/New_York' %}selected{% endif %}>Nueva York (GMT-5)</option>
+                                        <option value="Europe/Madrid" {% if settings.timezone == 'Europe/Madrid' %}selected{% endif %}>Madrid (GMT+1)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="low_stock_notification" name="low_stock_notification" {% if settings.low_stock_notification %}checked{% endif %}>
+                                <label class="form-check-label" for="low_stock_notification">
+                                    Activar notificaciones de stock bajo
+                                </label>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de la Empresa -->
+            <div class="tab-pane fade" id="company">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Información de la Empresa</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'pos:save_settings' 'company' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="company_logo" class="form-label">Logo de la Empresa</label>
+                                <div class="d-flex align-items-center mb-3">
+                                    {% if settings.company_logo %}
+                                    <img src="{{ settings.company_logo.url }}" alt="Logo" class="img-thumbnail me-3" style="width: 100px;">
+                                    {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center me-3" style="width: 100px; height: 100px; border-radius: 4px;">
+                                        <i class="fas fa-building text-secondary" style="font-size: 32px;"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <input type="file" class="form-control" id="company_logo" name="company_logo">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="company_name" class="form-label">Nombre de la Empresa</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" value="{{ settings.company_name }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="company_address" class="form-label">Dirección</label>
+                                <textarea class="form-control" id="company_address" name="company_address" rows="2">{{ settings.company_address }}</textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="company_phone" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="company_phone" name="company_phone" value="{{ settings.company_phone }}">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="company_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="company_email" name="company_email" value="{{ settings.company_email }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="company_website" class="form-label">Sitio Web</label>
+                                    <input type="url" class="form-control" id="company_website" name="company_website" value="{{ settings.company_website }}">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="company_tax_id" class="form-label">NIF/CIF</label>
+                                    <input type="text" class="form-control" id="company_tax_id" name="company_tax_id" value="{{ settings.company_tax_id }}">
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configuración de Recibos -->
+            <div class="tab-pane fade" id="receipt">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configuración de Recibos</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'pos:save_settings' 'receipt' %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="receipt_header" class="form-label">Encabezado del Recibo</label>
+                                <textarea class="form-control" id="receipt_header" name="receipt_header" rows="3">{{ settings.receipt_header }}</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="receipt_footer" class="form-label">Pie del Recibo</label>
+                                <textarea class="form-control" id="receipt_footer" name="receipt_footer" rows="3">{{ settings.receipt_footer }}</textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="receipt_show_tax" class="form-label">Mostrar Impuestos</label>
+                                    <select class="form-select" id="receipt_show_tax" name="receipt_show_tax">
+                                        <option value="yes" {% if settings.receipt_show_tax == 'yes' %}selected{% endif %}>Sí</option>
+                                        <option value="no" {% if settings.receipt_show_tax == 'no' %}selected{% endif %}>No</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="receipt_show_logo" class="form-label">Mostrar Logo</label>
+                                    <select class="form-select" id="receipt_show_logo" name="receipt_show_logo">
+                                        <option value="yes" {% if settings.receipt_show_logo == 'yes' %}selected{% endif %}>Sí</option>
+                                        <option value="no" {% if settings.receipt_show_logo == 'no' %}selected{% endif %}>No</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="receipt_auto_print" name="receipt_auto_print" {% if settings.receipt_auto_print %}checked{% endif %}>
+                                <label class="form-check-label" for="receipt_auto_print">
+                                    Imprimir recibo automáticamente al finalizar venta
+                                </label>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Impuestos -->
+            <div class="tab-pane fade" id="taxes">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configuración de Impuestos</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'pos:save_settings' 'taxes' %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="tax_rate" class="form-label">Tasa de IVA (%)</label>
+                                <input type="number" class="form-control" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" value="{{ settings.tax_rate|default:'21' }}">
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="prices_include_tax" name="prices_include_tax" {% if settings.prices_include_tax %}checked{% endif %}>
+                                <label class="form-check-label" for="prices_include_tax">
+                                    Los precios de productos incluyen impuestos
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="tax_number" class="form-label">Número de Identificación Fiscal</label>
+                                <input type="text" class="form-control" id="tax_number" name="tax_number" value="{{ settings.tax_number }}">
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Copias de Seguridad -->
+            <div class="tab-pane fade" id="backup">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Copias de Seguridad</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Gestione las copias de seguridad de sus datos para evitar pérdidas de información.</p>
+                        
+                        <div class="d-flex justify-content-between mb-4">
+                            <div>
+                                <h6>Crear copia de seguridad</h6>
+                                <p class="text-muted">Cree una copia de seguridad completa de la base de datos.</p>
+                            </div>
+                            <div>
+                                <form method="post" action="{% url 'pos:create_backup' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-download me-2"></i>Crear Backup
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-4">
+                            <div>
+                                <h6>Restaurar copia de seguridad</h6>
+                                <p class="text-muted">Restaure la base de datos desde una copia de seguridad existente.</p>
+                            </div>
+                            <div>
+                                <form method="post" action="{% url 'pos:restore_backup' %}" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="input-group">
+                                        <input type="file" class="form-control" name="backup_file" required>
+                                        <button class="btn btn-warning" type="submit">
+                                            <i class="fas fa-upload me-2"></i>Restaurar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-3">Copias de seguridad recientes</h6>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Fecha</th>
+                                    <th>Tamaño</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for backup in backups %}
+                                <tr>
+                                    <td>{{ backup.name }}</td>
+                                    <td>{{ backup.date|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ backup.size }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ backup.url }}" class="btn btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBackupModal" data-backup-id="{{ backup.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        No hay copias de seguridad disponibles.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Backup -->
+<div class="modal fade" id="deleteBackupModal" tabindex="-1" aria-labelledby="deleteBackupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBackupModalLabel">Eliminar Copia de Seguridad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Está seguro de que desea eliminar esta copia de seguridad?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteBackupForm" method="post" action="#">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestionar la acción del modal para eliminar backups
+    const deleteBackupModal = document.getElementById('deleteBackupModal');
+    if (deleteBackupModal) {
+        deleteBackupModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const backupId = button.getAttribute('data-backup-id');
+            
+            const form = document.getElementById('deleteBackupForm');
+            form.action = "{% url 'pos:delete_backup' 0 %}".replace('0', backupId);
+        });
+    }
+    
+    // Resaltar la pestaña activa según la URL
+    const hash = window.location.hash || '#general';
+    const activeTab = document.querySelector(`.list-group-item[href="${hash}"]`);
+    if (activeTab) {
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        activeTab.classList.add('active');
+        
+        // Activar el contenido de la pestaña
+        const tabContent = document.querySelector(hash);
+        if (tabContent) {
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+            tabContent.classList.add('show', 'active');
+        }
+    }
+});
+</script>
+{% endblock %} 

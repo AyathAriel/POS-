@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Historial de Ventas | POS System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Historial de Ventas</h1>
+        <p class="text-muted">Consulta las ventas realizadas y genera reportes.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-4 mb-lg-0">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas Hoy</h6>
+                        <h3 class="mb-0">${{ today_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4 mb-lg-0">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas esta Semana</h6>
+                        <h3 class="mb-0">${{ week_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4 mb-md-0">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas este Mes</h6>
+                        <h3 class="mb-0">${{ month_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas Totales</h6>
+                        <h3 class="mb-0">${{ total_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Filtros de búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <form id="salesFilterForm" method="get" action="{% url 'pos:sales_history' %}">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="dateRange" class="form-label">Rango de fecha</label>
+                            <select class="form-select" id="dateRange" name="date_range">
+                                <option value="today" {% if date_range == 'today' %}selected{% endif %}>Hoy</option>
+                                <option value="yesterday" {% if date_range == 'yesterday' %}selected{% endif %}>Ayer</option>
+                                <option value="week" {% if date_range == 'week' %}selected{% endif %}>Esta semana</option>
+                                <option value="month" {% if date_range == 'month' %}selected{% endif %}>Este mes</option>
+                                <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Personalizado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3 custom-date-range" {% if date_range != 'custom' %}style="display: none;"{% endif %}>
+                            <label for="startDate" class="form-label">Fecha inicial</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3 custom-date-range" {% if date_range != 'custom' %}style="display: none;"{% endif %}>
+                            <label for="endDate" class="form-label">Fecha final</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="customer" class="form-label">Cliente</label>
+                            <select class="form-select" id="customer" name="customer">
+                                <option value="">Todos los clientes</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if selected_customer == customer.id %}selected{% endif %}>
+                                    {{ customer.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="minAmount" class="form-label">Monto mínimo</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="minAmount" name="min_amount" value="{{ min_amount|default:'' }}" min="0" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="maxAmount" class="form-label">Monto máximo</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="maxAmount" name="max_amount" value="{{ max_amount|default:'' }}" min="0" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="searchTerm" class="form-label">Buscar por producto o referencia</label>
+                            <input type="text" class="form-control" id="searchTerm" name="search" value="{{ search_term|default:'' }}" placeholder="Nombre de producto, código o referencia...">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" id="clearFilters">Limpiar filtros</button>
+                        <div>
+                            <button type="submit" name="export" value="pdf" class="btn btn-danger">
+                                <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+                            </button>
+                            <button type="submit" name="export" value="excel" class="btn btn-success">
+                                <i class="fas fa-file-excel me-1"></i>Exportar Excel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Historial de Ventas</h5>
+        <span class="badge bg-primary">{{ sales.count }} ventas encontradas</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Método de pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.reference }}</td>
+                        <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if sale.customer %}
+                            {{ sale.customer.name }}
+                            {% else %}
+                            Cliente General
+                            {% endif %}
+                        </td>
+                        <td>{{ sale.items_count }} productos</td>
+                        <td class="fw-bold">${{ sale.total_amount|floatformat:2 }}</td>
+                        <td>{{ sale.get_payment_method_display }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary view-sale-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#viewSaleModal"
+                                        data-sale-id="{{ sale.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <a href="{% url 'pos:sale_receipt' sale.id %}" class="btn btn-outline-success" target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% if perms.pos.delete_sale %}
+                                <button type="button" class="btn btn-outline-danger cancel-sale-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#cancelSaleModal"
+                                        data-sale-id="{{ sale.id }}"
+                                        data-sale-reference="{{ sale.reference }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <p>No se encontraron ventas con los filtros actuales.</p>
+                            <button type="button" class="btn btn-primary" id="resetFiltersBtn">Limpiar todos los filtros</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if sales.has_other_pages %}
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if sales.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ sales.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in sales.paginator.page_range %}
+                        {% if sales.number == num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                        {% elif num > sales.number|add:'-3' and num < sales.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if sales.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ sales.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ sales.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Ver Venta -->
+<div class="modal fade" id="viewSaleModal" tabindex="-1" aria-labelledby="viewSaleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewSaleModalLabel">Detalle de Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="saleDetailsLoading" class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando detalles de la venta...</p>
+                </div>
+                
+                <div id="saleDetailsContent" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Referencia:</strong> <span id="saleReference"></span></p>
+                            <p><strong>Fecha:</strong> <span id="saleDate"></span></p>
+                            <p><strong>Cliente:</strong> <span id="saleCustomer"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Total:</strong> <span id="saleTotal" class="text-primary fw-bold"></span></p>
+                            <p><strong>Método de pago:</strong> <span id="salePaymentMethod"></span></p>
+                            <p><strong>Vendedor:</strong> <span id="saleCashier"></span></p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3">Productos</h6>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="saleItemsTableBody">
+                                <!-- Los items se cargarán aquí -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Total:</td>
+                                    <td class="text-end fw-bold" id="saleItemsTotal"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div id="saleNotes" class="mt-3" style="display: none;">
+                        <h6 class="border-bottom pb-2 mb-2">Notas</h6>
+                        <p id="saleNotesText" class="fst-italic"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="#" id="printReceiptBtn" class="btn btn-success" target="_blank">
+                    <i class="fas fa-print me-1"></i>Imprimir Recibo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cancelar Venta -->
+<div class="modal fade" id="cancelSaleModal" tabindex="-1" aria-labelledby="cancelSaleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelSaleModalLabel">Cancelar Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro de que deseas cancelar la venta <strong id="cancelSaleReference"></strong>?</p>
+                <p>Al cancelar la venta:</p>
+                <ul>
+                    <li>Se marcará como cancelada en el sistema</li>
+                    <li>Los productos volverán al inventario</li>
+                    <li>No se podrá volver a utilizar</li>
+                </ul>
+                <div class="mb-3">
+                    <label for="cancelReason" class="form-label">Motivo de cancelación</label>
+                    <textarea class="form-control" id="cancelReason" name="cancel_reason" rows="2" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <form id="cancelSaleForm" method="post" action="{% url 'pos:cancel_sale' 0 %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="cancel_reason" id="cancelReasonHidden">
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Control de rango de fechas personalizado
+        const dateRangeSelect = document.getElementById('dateRange');
+        const customDateFields = document.querySelectorAll('.custom-date-range');
+        
+        dateRangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateFields.forEach(field => field.style.display = 'block');
+            } else {
+                customDateFields.forEach(field => field.style.display = 'none');
+            }
+        });
+        
+        // Limpiar filtros
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            document.getElementById('dateRange').value = 'month';
+            document.getElementById('customer').value = '';
+            document.getElementById('minAmount').value = '';
+            document.getElementById('maxAmount').value = '';
+            document.getElementById('searchTerm').value = '';
+            customDateFields.forEach(field => field.style.display = 'none');
+        });
+        
+        if (document.getElementById('resetFiltersBtn')) {
+            document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+                window.location.href = "{% url 'pos:sales_history' %}";
+            });
+        }
+        
+        // Ver detalle de venta
+        const viewSaleButtons = document.querySelectorAll('.view-sale-btn');
+        viewSaleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const saleId = this.getAttribute('data-sale-id');
+                
+                document.getElementById('saleDetailsLoading').style.display = 'block';
+                document.getElementById('saleDetailsContent').style.display = 'none';
+                
+                // Actualizar URL del botón de impresión
+                document.getElementById('printReceiptBtn').href = `{% url 'pos:sale_receipt' 0 %}`.replace('0', saleId);
+                
+                // Aquí simularemos una carga AJAX en este ejemplo
+                setTimeout(function() {
+                    document.getElementById('saleDetailsLoading').style.display = 'none';
+                    document.getElementById('saleDetailsContent').style.display = 'block';
+                    
+                    // Estos datos se reemplazarían por la respuesta real AJAX
+                    const dummyData = {
+                        reference: 'VENTA-001',
+                        date: '10/04/2023 15:30',
+                        customer: 'Cliente General',
+                        total: '$150.00',
+                        payment_method: 'Efectivo',
+                        cashier: 'Admin',
+                        items: [
+                            { name: 'Producto 1', price: '$50.00', quantity: 2, subtotal: '$100.00' },
+                            { name: 'Producto 2', price: '$25.00', quantity: 2, subtotal: '$50.00' }
+                        ],
+                        notes: 'Esta es una venta de ejemplo para mostrar la funcionalidad.'
+                    };
+                    
+                    // Actualizar los datos en el modal
+                    document.getElementById('saleReference').textContent = dummyData.reference;
+                    document.getElementById('saleDate').textContent = dummyData.date;
+                    document.getElementById('saleCustomer').textContent = dummyData.customer;
+                    document.getElementById('saleTotal').textContent = dummyData.total;
+                    document.getElementById('salePaymentMethod').textContent = dummyData.payment_method;
+                    document.getElementById('saleCashier').textContent = dummyData.cashier;
+                    
+                    // Llenar la tabla de items
+                    const tableBody = document.getElementById('saleItemsTableBody');
+                    tableBody.innerHTML = '';
+                    
+                    dummyData.items.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.name}</td>
+                            <td class="text-end">${item.price}</td>
+                            <td class="text-end">${item.quantity}</td>
+                            <td class="text-end">${item.subtotal}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    document.getElementById('saleItemsTotal').textContent = dummyData.total;
+                    
+                    // Mostrar notas si existen
+                    if (dummyData.notes) {
+                        document.getElementById('saleNotes').style.display = 'block';
+                        document.getElementById('saleNotesText').textContent = dummyData.notes;
+                    } else {
+                        document.getElementById('saleNotes').style.display = 'none';
+                    }
+                }, 1000);
+            });
+        });
+        
+        // Cancelar venta
+        const cancelSaleButtons = document.querySelectorAll('.cancel-sale-btn');
+        cancelSaleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const saleId = this.getAttribute('data-sale-id');
+                const saleReference = this.getAttribute('data-sale-reference');
+                
+                document.getElementById('cancelSaleReference').textContent = saleReference;
+                
+                // Actualizar el formulario
+                const form = document.getElementById('cancelSaleForm');
+                form.action = form.action.replace(/\d+\/?$/, saleId + '/');
+                
+                // Pasar el motivo al formulario al enviar
+                document.getElementById('cancelSaleForm').addEventListener('submit', function() {
+                    document.getElementById('cancelReasonHidden').value = document.getElementById('cancelReason').value;
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

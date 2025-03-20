@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mi Perfil | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:dashboard' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Mi Perfil</h1>
+        <p class="text-muted">Gestiona tu información personal y preferencias.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Información Personal</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="position-relative d-inline-block">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="rounded-circle" width="120" height="120">
+                        {% else %}
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; margin: 0 auto;">
+                            <i class="fas fa-user text-secondary" style="font-size: 48px;"></i>
+                        </div>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#avatarModal">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <h5 class="mt-3 mb-1">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="text-muted mb-0">{{ user.email }}</p>
+                </div>
+                
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Rol:</span>
+                        <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Último acceso:</span>
+                        <span>{{ user.last_login|date:"d/m/Y H:i" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Miembro desde:</span>
+                        <span>{{ user.date_joined|date:"d/m/Y" }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Estadísticas</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Ventas realizadas:</span>
+                        <span class="badge bg-success rounded-pill">{{ user.sales.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Compras registradas:</span>
+                        <span class="badge bg-info rounded-pill">{{ user.purchases.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Productos agregados:</span>
+                        <span class="badge bg-warning rounded-pill">{{ user.products.count }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Editar Perfil</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'pos:update_profile' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.profile.phone }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Dirección</label>
+                        <textarea class="form-control" id="address" name="address" rows="2">{{ user.profile.address }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Cambiar Contraseña</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'pos:change_password' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Contraseña Actual</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambiar Avatar -->
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="avatarModalLabel">Cambiar Avatar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'pos:update_avatar' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="avatar" class="form-label">Seleccionar Imagen</label>
+                        <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*" required>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Actualizar Avatar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

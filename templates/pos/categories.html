@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Categorías | POS System{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+    <i class="fas fa-plus-circle me-2"></i>Nueva Categoría
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Categorías de Productos</h1>
+        <p class="text-muted">Administra las categorías para organizar tu catálogo de productos.</p>
+    </div>
+</div>
+
+<div class="row">
+    {% for category in categories %}
+    <div class="col-md-4 col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="card-title">{{ category.name }}</h5>
+                    <span class="badge bg-primary rounded-pill">{{ category.product_count }} productos</span>
+                </div>
+                <p class="card-text text-muted">{{ category.description|default:"Sin descripción"|truncatechars:100 }}</p>
+            </div>
+            <div class="card-footer bg-transparent d-flex justify-content-between">
+                <button type="button" class="btn btn-sm btn-outline-primary edit-category-btn" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#editCategoryModal"
+                        data-category-id="{{ category.id }}"
+                        data-category-name="{{ category.name }}"
+                        data-category-description="{{ category.description|default:'' }}">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteCategoryModal"
+                        data-category-id="{{ category.id }}"
+                        data-category-name="{{ category.name }}"
+                        data-product-count="{{ category.product_count }}">
+                    <i class="fas fa-trash me-1"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h5>No hay categorías registradas</h5>
+                <p class="text-muted">Las categorías te ayudan a organizar tus productos y facilitar su búsqueda.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    Crear primera categoría
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal Añadir Categoría -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Nueva Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'pos:category_create' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre*</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Categoría -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">Editar Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCategoryForm" method="post" action="{% url 'pos:category_update' 0 %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Nombre*</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Categoría -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCategoryModalLabel">Eliminar Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar la categoría <strong id="delete_category_name"></strong>?</p>
+                <div id="categoryHasProducts" class="alert alert-warning" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Esta categoría tiene <span id="productCount"></span> productos asociados. Al eliminarla, estos productos quedarán sin categoría.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteCategoryForm" method="post" action="{% url 'pos:category_delete' 0 %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Editar categoría
+        const editButtons = document.querySelectorAll('.edit-category-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const categoryId = this.getAttribute('data-category-id');
+                const categoryName = this.getAttribute('data-category-name');
+                const categoryDescription = this.getAttribute('data-category-description');
+                
+                // Actualizar el formulario
+                document.getElementById('edit_name').value = categoryName;
+                document.getElementById('edit_description').value = categoryDescription;
+                
+                // Actualizar la URL de acción del formulario
+                const form = document.getElementById('editCategoryForm');
+                form.action = form.action.replace(/\d+\/?$/, categoryId + '/');
+            });
+        });
+        
+        // Eliminar categoría
+        const deleteButtons = document.querySelectorAll('.delete-category-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const categoryId = this.getAttribute('data-category-id');
+                const categoryName = this.getAttribute('data-category-name');
+                const productCount = parseInt(this.getAttribute('data-product-count'));
+                
+                // Actualizar el modal
+                document.getElementById('delete_category_name').textContent = categoryName;
+                
+                // Mostrar advertencia si tiene productos
+                const warningEl = document.getElementById('categoryHasProducts');
+                if (productCount > 0) {
+                    document.getElementById('productCount').textContent = productCount;
+                    warningEl.style.display = 'block';
+                } else {
+                    warningEl.style.display = 'none';
+                }
+                
+                // Actualizar la URL de acción del formulario
+                const form = document.getElementById('deleteCategoryForm');
+                form.action = form.action.replace(/\d+\/?$/, categoryId + '/');
+            });
+        });
+    });
+</script>
+{% endblock %} 

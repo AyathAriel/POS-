@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | POS System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3">Dashboard</h1>
+        <p class="text-muted">Bienvenido al sistema de punto de venta, {{ user.get_full_name|default:user.username }}.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Sales Today Card -->
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-white-50">Ventas hoy</h6>
+                        <h2 class="mb-0">${{ today_sales|floatformat:2 }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-shopping-cart fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <small class="text-white-50">{{ today_sales_count }} ventas realizadas hoy</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sales This Month Card -->
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-white-50">Ventas este mes</h6>
+                        <h2 class="mb-0">${{ month_sales|floatformat:2 }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <small class="text-white-50">{{ month_sales_count }} ventas este mes</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Card -->
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-dark-50">Productos bajos en stock</h6>
+                        <h2 class="mb-0">{{ low_stock_count }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{% url 'pos:inventory_list' %}?low_stock=true" class="text-dark">
+                    <small>Ver productos bajos en stock</small>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Products Card -->
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-white-50">Total de productos</h6>
+                        <h2 class="mb-0">{{ total_products }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-box fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{% url 'pos:product_list' %}" class="text-white">
+                    <small>Ver todos los productos</small>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Sales -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Ventas recientes</h5>
+                <a href="{% url 'pos:sale_list' %}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Método de pago</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>{{ sale.invoice_number }}</td>
+                                <td>{{ sale.date|date:"d/m/Y H:i" }}</td>
+                                <td>{{ sale.customer.name|default:"Cliente general" }}</td>
+                                <td>{{ sale.get_payment_method_display }}</td>
+                                <td class="text-end">${{ sale.total|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3">No hay ventas recientes</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Products -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Productos bajos en stock</h5>
+                <a href="{% url 'pos:inventory_list' %}?low_stock=true" class="btn btn-sm btn-outline-warning">Ver todos</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for item in low_stock_products %}
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">{{ item.product.name }}</h6>
+                            <small class="text-muted">{{ item.product.category.name|default:"Sin categoría" }}</small>
+                        </div>
+                        <span class="badge bg-danger rounded-pill">{{ item.quantity }} en stock</span>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle text-success fa-2x mb-3"></i>
+                        <p>No hay productos bajos en stock</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Chart -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ventas de los últimos 7 días</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    // Inicializamos el gráfico con los datos proporcionados por Django
+    initDashboardChart({{ days_labels|safe }}, {{ sales_data|safe }});
+</script>
+{% endblock %}

@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inventario | POS System{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary" onclick="alert('Funcionalidad en desarrollo')">
+    <i class="fas fa-plus me-2"></i>Agregar Producto
+</button>
+<button class="btn btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#importModal">
+    <i class="fas fa-file-import me-2"></i>Importar
+</button>
+<button class="btn btn-outline-secondary ms-2" onclick="alert('Funcionalidad en desarrollo')">
+    <i class="fas fa-file-export me-2"></i>Exportar
+</button>
+<button class="btn btn-outline-info ms-2" onclick="alert('Funcionalidad en desarrollo')">
+    <i class="fas fa-print me-2"></i>Imprimir Reporte
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Inventario</h1>
+        <p class="text-muted">Gestión y control de productos en inventario.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Productos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_products }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Valor Total</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_value|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Stock Bajo</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Categorías</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ categories_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tags fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Listado de Productos</h5>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 250px;">
+                            <input type="text" class="form-control" id="searchProduct" placeholder="Buscar producto...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown me-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-tag me-1"></i>Categorías
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                                <li><a class="dropdown-item" href="#" data-category="all">Todas las categorías</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% for category in categories %}
+                                <li><a class="dropdown-item" href="#" data-category="{{ category.id }}">{{ category.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i>Filtrar
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item" href="#" data-filter="all">Todos los productos</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="active">Productos activos</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="inactive">Productos inactivos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" data-filter="low-stock">Stock bajo</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="out-of-stock">Sin stock</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Código</th>
+                                <th>Stock</th>
+                                <th>Precio Compra</th>
+                                <th>Precio Venta</th>
+                                <th>Estado</th>
+                                <th style="width: 150px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr data-category="{{ product.category.id }}" 
+                                data-status="{% if product.is_active %}active{% else %}inactive{% endif %}"
+                                data-stock="{{ product.stock }}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if product.image %}
+                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded me-2" width="40" height="40" style="object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center me-2 rounded" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-box text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <p class="mb-0 fw-bold">{{ product.name }}</p>
+                                            <small class="text-muted">{{ product.description|truncatechars:50 }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ product.category.name }}</span>
+                                </td>
+                                <td>{{ product.code }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">{{ product.stock }}</span>
+                                        {% if product.stock <= product.stock_min %}
+                                        <i class="fas fa-exclamation-triangle text-warning" title="Stock bajo"></i>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>${{ product.purchase_price|floatformat:2 }}</td>
+                                <td>${{ product.sale_price|floatformat:2 }}</td>
+                                <td>
+                                    {% if product.stock <= 0 %}
+                                    <span class="badge bg-danger">Sin Stock</span>
+                                    {% elif product.stock <= product.stock_min %}
+                                    <span class="badge bg-warning">Stock Bajo</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Disponible</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Editar" onclick="alert('Funcionalidad en desarrollo')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success" title="Ajustar Stock" 
+                                                data-bs-toggle="modal" data-bs-target="#adjustStockModal"
+                                                data-product-id="{{ product.id }}"
+                                                data-product-name="{{ product.name }}"
+                                                data-current-stock="{{ product.stock }}">
+                                            <i class="fas fa-layer-group"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" title="Ver Historial" onclick="alert('Funcionalidad en desarrollo')">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" title="Eliminar"
+                                                data-bs-toggle="modal" data-bs-target="#deleteProductModal"
+                                                data-product-id="{{ product.id }}"
+                                                data-product-name="{{ product.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-box-open fa-2x mb-3"></i>
+                                        <p class="mb-0">No hay productos en el inventario.</p>
+                                        <button class="btn btn-primary mt-3" onclick="alert('Funcionalidad en desarrollo')">
+                                            <i class="fas fa-plus me-2"></i>Agregar Primer Producto
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if products.has_other_pages %}
+            <div class="card-footer">
+                <nav aria-label="Navegación de productos">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if products.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in products.paginator.page_range %}
+                        <li class="page-item {% if products.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajustar Stock -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adjustStockModalLabel">Ajustar Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustStockForm" method="post" action="#" onsubmit="alert('Funcionalidad en desarrollo'); return false;">
+                    {% csrf_token %}
+                    <input type="hidden" id="product_id" name="product_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Producto</label>
+                        <input type="text" class="form-control" id="product_name" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Stock Actual</label>
+                        <input type="number" class="form-control" id="current_stock" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustment_type" class="form-label">Tipo de Ajuste</label>
+                        <select class="form-select" id="adjustment_type" name="adjustment_type" required>
+                            <option value="add">Agregar al stock actual</option>
+                            <option value="subtract">Restar del stock actual</option>
+                            <option value="set">Establecer nuevo valor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Motivo del Ajuste</label>
+                        <select class="form-select" id="reason" name="reason" required>
+                            <option value="purchase">Compra de mercadería</option>
+                            <option value="sale_return">Devolución de venta</option>
+                            <option value="loss">Pérdida o daño</option>
+                            <option value="correction">Corrección de inventario</option>
+                            <option value="initial">Stock inicial</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notas (opcional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="adjustStockForm" class="btn btn-primary">Guardar Ajuste</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Producto -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-labelledby="deleteProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProductModalLabel">Eliminar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro de que deseas eliminar el producto <strong id="deleteProductName"></strong>?</p>
+                <p>Al eliminar el producto:</p>
+                <ul>
+                    <li>Se eliminará toda la información del producto</li>
+                    <li>Se mantendrá el historial de ventas y compras</li>
+                    <li>No se podrá usar en nuevas transacciones</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteProductForm" method="post" action="#" onsubmit="alert('Funcionalidad en desarrollo'); return false;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Importar Productos -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Importar Productos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" method="post" action="#" enctype="multipart/form-data" onsubmit="alert('Funcionalidad en desarrollo'); return false;">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="import_file" class="form-label">Archivo CSV o Excel</label>
+                        <input type="file" class="form-control" id="import_file" name="import_file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        El archivo debe contener las siguientes columnas:
+                        <ul class="mb-0">
+                            <li>código</li>
+                            <li>nombre</li>
+                            <li>descripción</li>
+                            <li>categoría</li>
+                            <li>precio_compra</li>
+                            <li>precio_venta</li>
+                            <li>stock</li>
+                            <li>stock_mínimo</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="update_existing" name="update_existing" checked>
+                        <label class="form-check-label" for="update_existing">
+                            Actualizar productos existentes
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="importForm" class="btn btn-primary">Importar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración del modal para ajustar stock
+    const adjustStockModal = document.getElementById('adjustStockModal');
+    if (adjustStockModal) {
+        adjustStockModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-product-id');
+            const productName = button.getAttribute('data-product-name');
+            const currentStock = button.getAttribute('data-current-stock');
+            
+            document.getElementById('product_id').value = productId;
+            document.getElementById('product_name').value = productName;
+            document.getElementById('current_stock').value = currentStock;
+        });
+    }
+    
+    // Configuración del modal para eliminar producto
+    const deleteProductModal = document.getElementById('deleteProductModal');
+    if (deleteProductModal) {
+        deleteProductModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-product-id');
+            const productName = button.getAttribute('data-product-name');
+            
+            document.getElementById('deleteProductName').textContent = productName;
+        });
+    }
+    
+    // Búsqueda de productos
+    const searchInput = document.getElementById('searchProduct');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const productInfo = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const code = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                
+                if (productInfo.includes(searchTerm) || category.includes(searchTerm) || code.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Filtros por categoría
+    const categoryLinks = document.querySelectorAll('[data-category]');
+    categoryLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const category = this.getAttribute('data-category');
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (category === 'all') {
+                    row.style.display = '';
+                } else {
+                    const rowCategory = row.getAttribute('data-category');
+                    row.style.display = rowCategory === category ? '' : 'none';
+                }
+            });
+        });
+    });
+    
+    // Filtros por estado
+    const filterLinks = document.querySelectorAll('[data-filter]');
+    filterLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const filter = this.getAttribute('data-filter');
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (filter === 'all') {
+                    row.style.display = '';
+                } else if (filter === 'low-stock') {
+                    const stock = parseInt(row.getAttribute('data-stock'));
+                    const minStock = parseInt(row.getAttribute('data-min-stock'));
+                    row.style.display = (stock > 0 && stock <= minStock) ? '' : 'none';
+                } else if (filter === 'out-of-stock') {
+                    const stock = parseInt(row.getAttribute('data-stock'));
+                    row.style.display = stock <= 0 ? '' : 'none';
+                } else {
+                    const status = row.getAttribute('data-status');
+                    row.style.display = status === filter ? '' : 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

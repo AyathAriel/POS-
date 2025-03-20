@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Compras | POS System{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-success">
+    <i class="fas fa-plus-circle me-2"></i>Nueva Compra
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Gestión de Compras</h1>
+        <p class="text-muted">Administra las compras a proveedores y actualiza el inventario.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Compras</h5>
+        <div>
+            <div class="input-group">
+                <input type="text" id="searchPurchase" class="form-control" placeholder="Buscar compra...">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Proveedor
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#">Todos los proveedores</a></li>
+                    {% for supplier in suppliers %}
+                    <li><a class="dropdown-item" href="#">{{ supplier.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>Fecha</th>
+                        <th>Proveedor</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                    <tr>
+                        <td>{{ purchase.reference }}</td>
+                        <td>{{ purchase.date|date:"d/m/Y" }}</td>
+                        <td>{{ purchase.supplier.name }}</td>
+                        <td>{{ purchase.items_count }} productos</td>
+                        <td>${{ purchase.total|floatformat:2 }}</td>
+                        <td>
+                            {% if purchase.status == 'completed' %}
+                            <span class="badge bg-success">Completada</span>
+                            {% elif purchase.status == 'pending' %}
+                            <span class="badge bg-warning">Pendiente</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ purchase.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-success">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <p>No hay compras registradas.</p>
+                            <button type="button" class="btn btn-primary">
+                                Registrar primera compra
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

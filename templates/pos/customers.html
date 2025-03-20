@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Clientes | POS System{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+    <i class="fas fa-plus-circle me-2"></i>Nuevo Cliente
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Gestión de Clientes</h1>
+        <p class="text-muted">Administra tus clientes y su información de contacto.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Clientes</h5>
+        <div>
+            <div class="input-group">
+                <input type="text" id="searchCustomer" class="form-control" placeholder="Buscar cliente...">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Ordenar por
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" data-sort="name">Nombre</a></li>
+                    <li><a class="dropdown-item" href="#" data-sort="email">Email</a></li>
+                    <li><a class="dropdown-item" href="#" data-sort="date">Fecha de registro</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>Total Compras</th>
+                        <th>Última Compra</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr class="customer-row">
+                        <td>{{ customer.name }}</td>
+                        <td>{{ customer.email|default:"-" }}</td>
+                        <td>{{ customer.phone|default:"-" }}</td>
+                        <td>{{ customer.address|truncatechars:30|default:"-" }}</td>
+                        <td>${{ customer.total_purchases|floatformat:2 }}</td>
+                        <td>{{ customer.last_purchase|date:"d/m/Y"|default:"-" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary edit-customer-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editCustomerModal"
+                                        data-customer-id="{{ customer.id }}"
+                                        data-customer-name="{{ customer.name }}"
+                                        data-customer-email="{{ customer.email|default:'' }}"
+                                        data-customer-phone="{{ customer.phone|default:'' }}"
+                                        data-customer-address="{{ customer.address|default:'' }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-info view-purchases-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#viewPurchasesModal"
+                                        data-customer-id="{{ customer.id }}"
+                                        data-customer-name="{{ customer.name }}">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger delete-customer-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteCustomerModal"
+                                        data-customer-id="{{ customer.id }}"
+                                        data-customer-name="{{ customer.name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p>No hay clientes registrados.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                                Agregar el primer cliente
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if customers.has_other_pages %}
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if customers.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ customers.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in customers.paginator.page_range %}
+                        {% if customers.number == num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                        {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if customers.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ customers.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ customers.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Añadir Cliente -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCustomerModalLabel">Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'pos:customer_create' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre*</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Dirección</label>
+                        <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Cliente -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCustomerModalLabel">Editar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCustomerForm" method="post" action="{% url 'pos:customer_update' 0 %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Nombre*</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit_email" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_phone" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="edit_phone" name="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_address" class="form-label">Dirección</label>
+                        <textarea class="form-control" id="edit_address" name="address" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Cliente -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-labelledby="deleteCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCustomerModalLabel">Eliminar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar al cliente <strong id="delete_customer_name"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Esta acción no se puede deshacer. El historial de compras del cliente permanecerá en el sistema.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteCustomerForm" method="post" action="{% url 'pos:customer_delete' 0 %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Compras del Cliente -->
+<div class="modal fade" id="viewPurchasesModal" tabindex="-1" aria-labelledby="viewPurchasesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewPurchasesModalLabel">Historial de Compras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="purchasesLoading" class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando historial de compras...</p>
+                </div>
+                
+                <div id="purchasesContent" style="display: none;">
+                    <h5 id="purchasesCustomerName" class="mb-3"></h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Referencia</th>
+                                    <th>Fecha</th>
+                                    <th>Productos</th>
+                                    <th>Total</th>
+                                    <th>Método de pago</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchasesTableBody">
+                                <!-- El historial se cargará aquí vía AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="purchasesEmpty" class="text-center py-3" style="display: none;">
+                        <p class="text-muted">Este cliente no ha realizado compras aún.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="#" id="viewAllPurchasesBtn" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Ver todas en reportes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Buscador de clientes
+        const searchInput = document.getElementById('searchCustomer');
+        const customerRows = document.querySelectorAll('.customer-row');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            customerRows.forEach(row => {
+                const customerName = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                const customerEmail = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const customerPhone = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                
+                if (customerName.includes(searchTerm) || 
+                    customerEmail.includes(searchTerm) || 
+                    customerPhone.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Editar cliente
+        const editButtons = document.querySelectorAll('.edit-customer-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.getAttribute('data-customer-id');
+                const customerName = this.getAttribute('data-customer-name');
+                const customerEmail = this.getAttribute('data-customer-email');
+                const customerPhone = this.getAttribute('data-customer-phone');
+                const customerAddress = this.getAttribute('data-customer-address');
+                
+                // Actualizar el formulario
+                document.getElementById('edit_name').value = customerName;
+                document.getElementById('edit_email').value = customerEmail;
+                document.getElementById('edit_phone').value = customerPhone;
+                document.getElementById('edit_address').value = customerAddress;
+                
+                // Actualizar la URL de acción del formulario
+                const form = document.getElementById('editCustomerForm');
+                form.action = form.action.replace(/\d+\/?$/, customerId + '/');
+            });
+        });
+        
+        // Eliminar cliente
+        const deleteButtons = document.querySelectorAll('.delete-customer-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.getAttribute('data-customer-id');
+                const customerName = this.getAttribute('data-customer-name');
+                
+                // Actualizar el modal
+                document.getElementById('delete_customer_name').textContent = customerName;
+                
+                // Actualizar la URL de acción del formulario
+                const form = document.getElementById('deleteCustomerForm');
+                form.action = form.action.replace(/\d+\/?$/, customerId + '/');
+            });
+        });
+        
+        // Ver historial de compras
+        const viewPurchasesButtons = document.querySelectorAll('.view-purchases-btn');
+        viewPurchasesButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.getAttribute('data-customer-id');
+                const customerName = this.getAttribute('data-customer-name');
+                
+                document.getElementById('purchasesCustomerName').textContent = 'Compras de ' + customerName;
+                document.getElementById('purchasesLoading').style.display = 'block';
+                document.getElementById('purchasesContent').style.display = 'none';
+                document.getElementById('purchasesEmpty').style.display = 'none';
+                
+                // Actualizar URL del botón de ver todas
+                document.getElementById('viewAllPurchasesBtn').href = `{% url 'pos:sales_history' %}?customer=${customerId}`;
+                
+                // Aquí simularemos una carga AJAX en este ejemplo
+                setTimeout(function() {
+                    document.getElementById('purchasesLoading').style.display = 'none';
+                    document.getElementById('purchasesContent').style.display = 'block';
+                    
+                    // Esto se reemplazaría por la respuesta real AJAX
+                    const dummyData = [
+                        {id: 1, reference: 'VENTA-001', date: '10/04/2023', items_count: 3, total: '$150.00', payment_method: 'Efectivo'},
+                        {id: 2, reference: 'VENTA-002', date: '15/04/2023', items_count: 1, total: '$75.00', payment_method: 'Tarjeta'},
+                        {id: 3, reference: 'VENTA-003', date: '22/04/2023', items_count: 2, total: '$120.00', payment_method: 'Transferencia'}
+                    ];
+                    
+                    const tableBody = document.getElementById('purchasesTableBody');
+                    tableBody.innerHTML = '';
+                    
+                    if (dummyData.length > 0) {
+                        dummyData.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${item.reference}</td>
+                                <td>${item.date}</td>
+                                <td>${item.items_count} productos</td>
+                                <td>${item.total}</td>
+                                <td>${item.payment_method}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'pos:sale_receipt' 0 %}".replace('0', item.id) class="btn btn-outline-primary" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'pos:sale_receipt' 0 %}".replace('0', item.id) class="btn btn-outline-success" target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        document.getElementById('purchasesEmpty').style.display = 'block';
+                    }
+                }, 1000);
+            });
+        });
+    });
+</script>
+{% endblock %} 

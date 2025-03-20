@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ayuda | POS System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Ayuda y Soporte</h1>
+        <p class="text-muted">Encuentra respuestas a tus preguntas y aprende a usar el sistema.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="list-group">
+            <a href="#getting-started" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                <i class="fas fa-rocket me-2"></i>Primeros Pasos
+            </a>
+            <a href="#sales" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-shopping-cart me-2"></i>Ventas
+            </a>
+            <a href="#inventory" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-boxes me-2"></i>Inventario
+            </a>
+            <a href="#purchases" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-truck me-2"></i>Compras
+            </a>
+            <a href="#reports" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-chart-bar me-2"></i>Reportes
+            </a>
+            <a href="#settings" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-cog me-2"></i>Configuración
+            </a>
+            <a href="#faq" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="fas fa-question-circle me-2"></i>Preguntas Frecuentes
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-lg-9">
+        <div class="tab-content">
+            <!-- Primeros Pasos -->
+            <div class="tab-pane fade show active" id="getting-started">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Primeros Pasos</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>1. Configuración Inicial</h6>
+                        <p>Antes de comenzar a usar el sistema, asegúrate de:</p>
+                        <ul>
+                            <li>Configurar la información de tu empresa en Configuración > Información de la Empresa</li>
+                            <li>Establecer los impuestos y moneda en Configuración > Impuestos</li>
+                            <li>Personalizar el formato de los recibos en Configuración > Recibos</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">2. Gestión de Usuarios</h6>
+                        <p>Para agregar nuevos usuarios al sistema:</p>
+                        <ol>
+                            <li>Ve a Configuración > Usuarios</li>
+                            <li>Haz clic en "Agregar Usuario"</li>
+                            <li>Completa la información del usuario y asigna su rol</li>
+                        </ol>
+                        
+                        <h6 class="mt-4">3. Configuración de Productos</h6>
+                        <p>Para comenzar a vender, necesitas:</p>
+                        <ul>
+                            <li>Crear categorías de productos</li>
+                            <li>Registrar productos con sus precios y stock</li>
+                            <li>Configurar alertas de stock bajo</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ventas -->
+            <div class="tab-pane fade" id="sales">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Gestión de Ventas</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Realizar una Venta</h6>
+                        <ol>
+                            <li>Ve a la sección Punto de Venta</li>
+                            <li>Busca productos por código de barras o nombre</li>
+                            <li>Agrega productos al carrito</li>
+                            <li>Selecciona el cliente (opcional)</li>
+                            <li>Elige el método de pago</li>
+                            <li>Finaliza la venta</li>
+                        </ol>
+                        
+                        <h6 class="mt-4">Gestión de Ventas</h6>
+                        <ul>
+                            <li>Ver historial de ventas</li>
+                            <li>Imprimir recibos</li>
+                            <li>Cancelar ventas</li>
+                            <li>Generar reportes de ventas</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Clientes</h6>
+                        <p>Para gestionar clientes:</p>
+                        <ul>
+                            <li>Registra nuevos clientes</li>
+                            <li>Mantén un historial de compras por cliente</li>
+                            <li>Gestiona créditos y pagos pendientes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventario -->
+            <div class="tab-pane fade" id="inventory">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Gestión de Inventario</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Control de Stock</h6>
+                        <ul>
+                            <li>Registra entradas y salidas de productos</li>
+                            <li>Realiza ajustes de inventario</li>
+                            <li>Configura alertas de stock bajo</li>
+                            <li>Realiza conteos físicos</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Productos</h6>
+                        <p>Para gestionar productos:</p>
+                        <ul>
+                            <li>Agrega nuevos productos</li>
+                            <li>Actualiza precios y descripciones</li>
+                            <li>Gestiona variantes de productos</li>
+                            <li>Asigna códigos de barras</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Categorías</h6>
+                        <p>Organiza tus productos en categorías:</p>
+                        <ul>
+                            <li>Crea categorías y subcategorías</li>
+                            <li>Asigna productos a categorías</li>
+                            <li>Gestiona descuentos por categoría</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compras -->
+            <div class="tab-pane fade" id="purchases">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Gestión de Compras</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Registrar una Compra</h6>
+                        <ol>
+                            <li>Ve a la sección Compras</li>
+                            <li>Selecciona el proveedor</li>
+                            <li>Agrega productos a la compra</li>
+                            <li>Ingresa precios y cantidades</li>
+                            <li>Registra la compra</li>
+                        </ol>
+                        
+                        <h6 class="mt-4">Proveedores</h6>
+                        <p>Para gestionar proveedores:</p>
+                        <ul>
+                            <li>Registra nuevos proveedores</li>
+                            <li>Mantén un historial de compras por proveedor</li>
+                            <li>Gestiona pagos pendientes</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Órdenes de Compra</h6>
+                        <ul>
+                            <li>Crea órdenes de compra</li>
+                            <li>Realiza seguimiento de pedidos</li>
+                            <li>Gestiona devoluciones</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reportes -->
+            <div class="tab-pane fade" id="reports">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Reportes y Análisis</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Reportes de Ventas</h6>
+                        <ul>
+                            <li>Ventas por período</li>
+                            <li>Productos más vendidos</li>
+                            <li>Ventas por vendedor</li>
+                            <li>Métodos de pago</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Reportes de Inventario</h6>
+                        <ul>
+                            <li>Stock actual</li>
+                            <li>Movimientos de inventario</li>
+                            <li>Productos con stock bajo</li>
+                            <li>Valor del inventario</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Reportes Financieros</h6>
+                        <ul>
+                            <li>Ingresos y gastos</li>
+                            <li>Margen de ganancia</li>
+                            <li>Cuentas por cobrar</li>
+                            <li>Cuentas por pagar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configuración -->
+            <div class="tab-pane fade" id="settings">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configuración del Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Configuración General</h6>
+                        <ul>
+                            <li>Idioma y moneda</li>
+                            <li>Formato de fecha y hora</li>
+                            <li>Zona horaria</li>
+                            <li>Notificaciones</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Seguridad</h6>
+                        <ul>
+                            <li>Gestión de usuarios</li>
+                            <li>Roles y permisos</li>
+                            <li>Registro de actividad</li>
+                            <li>Copias de seguridad</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Personalización</h6>
+                        <ul>
+                            <li>Logo y marca</li>
+                            <li>Formato de recibos</li>
+                            <li>Plantillas de correo</li>
+                            <li>Campos personalizados</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preguntas Frecuentes -->
+            <div class="tab-pane fade" id="faq">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Preguntas Frecuentes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="faqAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        ¿Cómo puedo cambiar mi contraseña?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Ve a Mi Perfil > Cambiar Contraseña y sigue los pasos indicados.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        ¿Cómo puedo cancelar una venta?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Ve a la sección de Ventas, busca la venta que deseas cancelar y utiliza el botón de cancelación. Recuerda que necesitas permisos de administrador.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        ¿Cómo realizo un ajuste de inventario?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Ve a Inventario > Ajustes, selecciona el producto y registra la diferencia de stock.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                        ¿Cómo genero un reporte de ventas?
+                                    </button>
+                                </h2>
+                                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Ve a Reportes > Ventas, selecciona el período y los filtros deseados, luego haz clic en Generar Reporte.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">¿Necesitas más ayuda?</h5>
+                <p class="card-text">Si no encuentras la respuesta que buscas, puedes:</p>
+                <ul>
+                    <li>Contactar al soporte técnico</li>
+                    <li>Consultar la documentación completa</li>
+                    <li>Enviar un correo de soporte</li>
+                </ul>
+                <a href="mailto:soporte@posystem.com" class="btn btn-primary">
+                    <i class="fas fa-envelope me-2"></i>Contactar Soporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

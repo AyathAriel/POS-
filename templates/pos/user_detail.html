@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ user.username }} | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="javascript:history.back()" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+</a>
+{% if request.user.is_staff %}
+<button class="btn btn-primary ms-2" onclick="alert('Funcionalidad en desarrollo')">
+    <i class="fas fa-edit me-2"></i>Editar Usuario
+</button>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Información del Usuario</h5>
+                <span class="badge bg-{{ user.is_active|yesno:'success,danger' }}">
+                    {{ user.is_active|yesno:'Activo,Inactivo' }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <img src="{{ user.profile.avatar.url|default:'https://via.placeholder.com/150' }}" alt="Avatar" class="rounded-circle" width="100" height="100">
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-0">{{ user.get_full_name|default:user.username }}</h3>
+                        <div class="mb-2">
+                            {% if user.is_superuser %}
+                                <span class="badge bg-danger me-1">Administrador</span>
+                            {% elif user.is_staff %}
+                                <span class="badge bg-warning me-1">Gerente</span>
+                            {% else %}
+                                <span class="badge bg-info me-1">Vendedor</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted mb-0">{{ user.email }}</p>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <h6 class="fw-bold">Último inicio de sesión</h6>
+                            <p>{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="fw-bold">Miembro desde</h6>
+                            <p>{{ user.date_joined|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if user.profile.phone %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold">Teléfono</h6>
+                            <p>{{ user.profile.phone }}</p>
+                        </div>
+                        {% endif %}
+                        {% if user.profile.bio %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold">Biografía</h6>
+                            <p>{{ user.profile.bio }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Estadísticas</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span>Ventas realizadas</span>
+                        <span class="badge bg-primary">{{ user.sales.count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ user.sales.count|default:0|div:total_sales|mul:100 }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span>Ingresos generados</span>
+                        <span>${{ user.total_sales_amount|default:"0.00" }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ user.total_sales_amount|default:0|div:total_amount|mul:100 }}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span>Productos agregados</span>
+                        <span class="badge bg-info">{{ user.products.count }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ user.products.count|default:0|div:total_products|mul:100 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Seguridad</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="fw-bold">Último cambio de contraseña</h6>
+                    <p>{{ user.password_change_date|date:"d/m/Y"|default:"No registrado" }}</p>
+                </div>
+                <button class="btn btn-outline-secondary w-100" onclick="alert('Funcionalidad en desarrollo')">
+                    <i class="fas fa-key me-2"></i>Cambiar contraseña
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Ventas Recientes</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="alert('Funcionalidad en desarrollo')">
+                    Ver todas
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in user.sales.all|slice:":5" %}
+                            <tr>
+                                <td>#{{ sale.id }}</td>
+                                <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                                <td>{{ sale.customer.name|default:"Venta directa" }}</td>
+                                <td>${{ sale.total }}</td>
+                                <td>
+                                    <span class="badge bg-{{ sale.get_status_color }}">
+                                        {{ sale.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" onclick="alert('Funcionalidad en desarrollo')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No hay ventas recientes</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Actividad Reciente</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for log in user.logs.all|slice:":10" %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">{{ log.action }}</h6>
+                            <p class="text-muted mb-0 small">
+                                {{ log.timestamp|date:"d/m/Y H:i" }}
+                            </p>
+                            <p class="mb-0">{{ log.description }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center">No hay registros de actividad</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.is_superuser %}
+    <div class="col-lg-4">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Acciones Administrativas</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading">Precaución</h5>
+                            <p class="mb-0">Las siguientes acciones son irreversibles. Proceda con cuidado.</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-outline-danger w-100 mb-3" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                    <i class="fas fa-trash-alt me-2"></i>Eliminar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para eliminar usuario -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Eliminar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading">¡Advertencia!</h5>
+                            <p class="mb-0">Esta acción es irreversible. Se eliminarán todos los datos asociados al usuario.</p>
+                        </div>
+                    </div>
+                </div>
+                <p>¿Está seguro que desea eliminar a <strong>{{ user.username }}</strong>?</p>
+                <p>Al eliminar este usuario:</p>
+                <ul>
+                    <li>Se eliminará su perfil y datos personales</li>
+                    <li>Sus ventas quedarán sin asociación de usuario</li>
+                    <li>No podrá ingresar al sistema</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="#" method="post" onsubmit="alert('Funcionalidad en desarrollo'); return false;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar Usuario</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    .timeline-marker {
+        position: absolute;
+        left: -0.5rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background-color: #3490dc;
+        border: 2px solid #fff;
+    }
+    .timeline-content {
+        padding-left: 1rem;
+    }
+</style>
+{% endblock %} 

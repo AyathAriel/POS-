@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Detalle de Venta | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:sale_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver a Ventas
+</a>
+<button type="button" class="btn btn-success ms-2">
+    <i class="fas fa-print me-2"></i>Imprimir Recibo
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Detalle de Venta</h1>
+        <p class="text-muted">Información completa de la venta realizada.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Productos Vendidos</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-end">Precio unitario</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sale.items.all %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
+                                             class="me-3 img-thumbnail" width="40">
+                                        {% else %}
+                                        <div class="me-3 bg-light d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px; border-radius: 4px;">
+                                            <i class="fas fa-box text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <p class="mb-0 fw-bold">{{ item.product.name }}</p>
+                                            <small class="text-muted">{{ item.product.barcode|default:"-" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-end">${{ item.price|floatformat:2 }}</td>
+                                <td class="text-end">{{ item.quantity }}</td>
+                                <td class="text-end">${{ item.subtotal|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Total:</td>
+                                <td class="text-end fw-bold">${{ sale.total|floatformat:2 }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% if sale.notes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Notas</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ sale.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información de la Venta</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Referencia:</span>
+                        <span class="fw-bold">{{ sale.reference }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Fecha:</span>
+                        <span>{{ sale.date|date:"d/m/Y H:i" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total:</span>
+                        <span class="text-primary fw-bold">${{ sale.total|floatformat:2 }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Método de pago:</span>
+                        <span>{{ sale.get_payment_method_display }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Estado:</span>
+                        {% if sale.is_active %}
+                        <span class="badge bg-success">Activa</span>
+                        {% else %}
+                        <span class="badge bg-danger">Cancelada</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Cliente</h5>
+            </div>
+            <div class="card-body">
+                {% if sale.customer %}
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Nombre:</span>
+                        <span class="fw-bold">{{ sale.customer.name }}</span>
+                    </li>
+                    {% if sale.customer.email %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Email:</span>
+                        <span>{{ sale.customer.email }}</span>
+                    </li>
+                    {% endif %}
+                    {% if sale.customer.phone %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Teléfono:</span>
+                        <span>{{ sale.customer.phone }}</span>
+                    </li>
+                    {% endif %}
+                    {% if sale.customer.address %}
+                    <li class="list-group-item">
+                        <span class="text-muted">Dirección:</span>
+                        <p class="mb-0 mt-1">{{ sale.customer.address }}</p>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% else %}
+                <p class="text-center text-muted mb-0">Cliente General</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Vendedor</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Nombre:</span>
+                        <span class="fw-bold">{{ sale.user.get_full_name|default:sale.user.username }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

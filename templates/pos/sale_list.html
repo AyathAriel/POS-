@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ventas | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:point_of_sale' %}" class="btn btn-success">
+    <i class="fas fa-plus-circle me-2"></i>Nueva Venta
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Historial de Ventas</h1>
+        <p class="text-muted">Consulta las ventas realizadas y genera reportes.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-4 mb-lg-0">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas Hoy</h6>
+                        <h3 class="mb-0">${{ today_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4 mb-lg-0">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas esta Semana</h6>
+                        <h3 class="mb-0">${{ week_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4 mb-md-0">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas este Mes</h6>
+                        <h3 class="mb-0">${{ month_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Ventas Totales</h6>
+                        <h3 class="mb-0">${{ total_sales|floatformat:2 }}</h3>
+                    </div>
+                    <div class="fs-1 text-white-50">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Filtros de búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <form id="salesFilterForm" method="get" action="{% url 'pos:sale_list' %}">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="dateRange" class="form-label">Rango de fecha</label>
+                            <select class="form-select" id="dateRange" name="date_range">
+                                <option value="today" {% if date_range == 'today' %}selected{% endif %}>Hoy</option>
+                                <option value="yesterday" {% if date_range == 'yesterday' %}selected{% endif %}>Ayer</option>
+                                <option value="week" {% if date_range == 'week' %}selected{% endif %}>Esta semana</option>
+                                <option value="month" {% if date_range == 'month' %}selected{% endif %}>Este mes</option>
+                                <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Personalizado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3 custom-date-range" {% if date_range != 'custom' %}style="display: none;"{% endif %}>
+                            <label for="startDate" class="form-label">Fecha inicial</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3 custom-date-range" {% if date_range != 'custom' %}style="display: none;"{% endif %}>
+                            <label for="endDate" class="form-label">Fecha final</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="customer" class="form-label">Cliente</label>
+                            <select class="form-select" id="customer" name="customer">
+                                <option value="">Todos los clientes</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if selected_customer == customer.id %}selected{% endif %}>
+                                    {{ customer.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" id="clearFilters">Limpiar filtros</button>
+                        <div>
+                            <button type="submit" name="export" value="pdf" class="btn btn-danger">
+                                <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+                            </button>
+                            <button type="submit" name="export" value="excel" class="btn btn-success">
+                                <i class="fas fa-file-excel me-1"></i>Exportar Excel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Historial de Ventas</h5>
+        <span class="badge bg-primary">{{ sales.count }} ventas encontradas</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Método de pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.reference }}</td>
+                        <td>{{ sale.date|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if sale.customer %}
+                            {{ sale.customer.name }}
+                            {% else %}
+                            Cliente General
+                            {% endif %}
+                        </td>
+                        <td>{{ sale.items_count }} productos</td>
+                        <td class="fw-bold">${{ sale.total|floatformat:2 }}</td>
+                        <td>{{ sale.get_payment_method_display }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'pos:sale_detail' sale.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-success">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                {% if perms.pos.delete_sale %}
+                                <button type="button" class="btn btn-outline-danger cancel-sale-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#cancelSaleModal"
+                                        data-sale-id="{{ sale.id }}"
+                                        data-sale-reference="{{ sale.reference }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <p>No se encontraron ventas con los filtros actuales.</p>
+                            <button type="button" class="btn btn-primary" id="resetFiltersBtn">Limpiar todos los filtros</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cancelar Venta -->
+<div class="modal fade" id="cancelSaleModal" tabindex="-1" aria-labelledby="cancelSaleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelSaleModalLabel">Cancelar Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro de que deseas cancelar la venta <strong id="cancelSaleReference"></strong>?</p>
+                <p>Al cancelar la venta:</p>
+                <ul>
+                    <li>Se marcará como cancelada en el sistema</li>
+                    <li>Los productos volverán al inventario</li>
+                    <li>No se podrá volver a utilizar</li>
+                </ul>
+                <div class="mb-3">
+                    <label for="cancelReason" class="form-label">Motivo de cancelación</label>
+                    <textarea class="form-control" id="cancelReason" name="cancel_reason" rows="2" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <form id="cancelSaleForm" method="post" action="#">
+                    {% csrf_token %}
+                    <input type="hidden" name="cancel_reason" id="cancelReasonHidden">
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Control de rango de fechas personalizado
+        const dateRangeSelect = document.getElementById('dateRange');
+        const customDateFields = document.querySelectorAll('.custom-date-range');
+        
+        dateRangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateFields.forEach(field => field.style.display = 'block');
+            } else {
+                customDateFields.forEach(field => field.style.display = 'none');
+            }
+        });
+        
+        // Limpiar filtros
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            document.getElementById('dateRange').value = 'month';
+            document.getElementById('customer').value = '';
+            customDateFields.forEach(field => field.style.display = 'none');
+        });
+        
+        if (document.getElementById('resetFiltersBtn')) {
+            document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+                window.location.href = "{% url 'pos:sale_list' %}";
+            });
+        }
+        
+        // Cancelar venta
+        const cancelSaleButtons = document.querySelectorAll('.cancel-sale-btn');
+        cancelSaleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const saleId = this.getAttribute('data-sale-id');
+                const saleReference = this.getAttribute('data-sale-reference');
+                
+                document.getElementById('cancelSaleReference').textContent = saleReference;
+                
+                // Actualizar el formulario
+                const form = document.getElementById('cancelSaleForm');
+                form.action = "{% url 'pos:sale_list' %}".replace('sale_list', 'sale_cancel/' + saleId);
+                
+                // Pasar el motivo al formulario al enviar
+                document.getElementById('cancelSaleForm').addEventListener('submit', function() {
+                    document.getElementById('cancelReasonHidden').value = document.getElementById('cancelReason').value;
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if product %}Editar Producto{% else %}Nuevo Producto{% endif %} | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:product_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">{% if product %}Editar Producto{% else %}Nuevo Producto{% endif %}</h1>
+        <p class="text-muted">Completa el formulario con los datos del producto.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Nombre*</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ product.name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">Categoría</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Sin categoría</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if product.category.id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ product.description|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="barcode" class="form-label">Código de barras</label>
+                            <input type="text" class="form-control" id="barcode" name="barcode" value="{{ product.barcode|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="purchase_price" class="form-label">Precio de compra*</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="purchase_price" name="purchase_price" value="{{ product.purchase_price|default:'0' }}" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sale_price" class="form-label">Precio de venta*</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="sale_price" name="sale_price" value="{{ product.sale_price|default:'0' }}" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Imagen del producto</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        {% if product.image %}
+                        <div class="mt-2">
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-thumbnail" style="max-height: 100px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'pos:product_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Información</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {% if product %}
+                    Estás editando un producto existente. Al guardar, los datos se actualizarán inmediatamente.
+                    {% else %}
+                    Al crear un nuevo producto, este tendrá un inventario inicial de 0 unidades. Deberás actualizar el inventario después de crear el producto.
+                    {% endif %}
+                </div>
+                
+                <p><strong>Campos requeridos:</strong></p>
+                <ul>
+                    <li>Nombre</li>
+                    <li>Precio de compra</li>
+                    <li>Precio de venta</li>
+                </ul>
+                
+                <p><strong>Imagen del producto:</strong></p>
+                <p class="text-muted small">La imagen es opcional. Se recomienda usar imágenes cuadradas de al menos 300x300 píxeles para mejores resultados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calcular margen de ganancia
+        const purchasePrice = document.getElementById('purchase_price');
+        const salePrice = document.getElementById('sale_price');
+        
+        const calculateProfit = function() {
+            const purchase = parseFloat(purchasePrice.value) || 0;
+            const sale = parseFloat(salePrice.value) || 0;
+            
+            if (purchase > 0 && sale > 0) {
+                const profit = ((sale - purchase) / purchase) * 100;
+                console.log(`Margen de ganancia: ${profit.toFixed(2)}%`);
+            }
+        };
+        
+        purchasePrice.addEventListener('input', calculateProfit);
+        salePrice.addEventListener('input', calculateProfit);
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Productos | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:product_create' %}" class="btn btn-success">
+    <i class="fas fa-plus-circle me-2"></i>Nuevo Producto
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Gestión de Productos</h1>
+        <p class="text-muted">Administra el catálogo de productos de tu negocio.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Productos</h5>
+        <div>
+            <div class="input-group">
+                <input type="text" id="searchProduct" class="form-control" placeholder="Buscar producto...">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Categoría
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" data-category="all">Todas</a></li>
+                    {% for category in categories %}
+                    <li><a class="dropdown-item" href="#" data-category="{{ category.id }}">{{ category.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="60">Imagen</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Código</th>
+                        <th>Precio Compra</th>
+                        <th>Precio Venta</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="product-row" data-category="{{ product.category.id|default:'0' }}">
+                        <td>
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-thumbnail" width="50">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-box text-secondary"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.category.name|default:"Sin categoría" }}</td>
+                        <td>{{ product.barcode|default:"-" }}</td>
+                        <td>${{ product.purchase_price|floatformat:2 }}</td>
+                        <td>${{ product.sale_price|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge {% if product.current_stock <= 0 %}bg-danger{% elif product.current_stock <= 5 %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ product.current_stock }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'pos:product_edit' product.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'pos:product_delete' product.id %}" class="btn btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p>No hay productos registrados.</p>
+                            <a href="{% url 'pos:product_create' %}" class="btn btn-primary">Agregar el primer producto</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Buscador de productos
+        const searchInput = document.getElementById('searchProduct');
+        const productRows = document.querySelectorAll('.product-row');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            productRows.forEach(row => {
+                const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const barcode = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                
+                if (productName.includes(searchTerm) || barcode.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Filtro por categoría
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const category = this.getAttribute('data-category');
+                
+                productRows.forEach(row => {
+                    if (category === 'all' || row.getAttribute('data-category') === category) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

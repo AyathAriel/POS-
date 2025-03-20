@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inventario | POS System{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary" onclick="alert('Funcionalidad en desarrollo')">
+    <i class="fas fa-plus me-2"></i>Agregar Producto
+</button>
+<button class="btn btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#importModal">
+    <i class="fas fa-file-import me-2"></i>Importar
+</button>
+<button class="btn btn-outline-secondary ms-2" onclick="alert('Funcionalidad en desarrollo')">
+    <i class="fas fa-file-export me-2"></i>Exportar
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Inventario</h1>
+        <p class="text-muted">Gestión y control de inventario.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Productos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_products }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Valor Inventario</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ inventory_value|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Stock Bajo</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Categorías</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ category_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tags fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Productos en Inventario</h5>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 250px;">
+                            <input type="text" class="form-control" id="searchInventory" placeholder="Buscar producto...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i>Filtrar
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item" href="#" data-filter="all">Todos los productos</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="low-stock">Stock bajo</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="no-stock">Sin stock</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% for category in categories %}
+                                <li><a class="dropdown-item" href="#" data-filter-category="{{ category.id }}">{{ category.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">#</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Código</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inventory in inventories %}
+                            <tr data-category="{{ inventory.product.category.id }}" data-stock="{{ inventory.quantity }}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if inventory.product.image %}
+                                        <img src="{{ inventory.product.image.url }}" alt="{{ inventory.product.name }}" class="rounded me-2" width="40">
+                                        {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center me-2 rounded" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-box text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <p class="mb-0 fw-bold">{{ inventory.product.name }}</p>
+                                            <small class="text-muted">{{ inventory.product.description|truncatechars:30 }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ inventory.product.category.name }}</td>
+                                <td>{{ inventory.product.code }}</td>
+                                <td>${{ inventory.product.price|floatformat:2 }}</td>
+                                <td>{{ inventory.quantity }}</td>
+                                <td>
+                                    {% if inventory.quantity <= 0 %}
+                                    <span class="badge bg-danger">Sin Stock</span>
+                                    {% elif inventory.quantity <= inventory.product.reorder_level %}
+                                    <span class="badge bg-warning">Stock Bajo</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Disponible</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Editar" onclick="alert('Funcionalidad en desarrollo')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#adjustStockModal" 
+                                                data-product-id="{{ inventory.product.id }}"
+                                                data-product-name="{{ inventory.product.name }}"
+                                                data-current-stock="{{ inventory.quantity }}"
+                                                title="Ajustar Stock">
+                                            <i class="fas fa-layer-group"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" title="Ver Historial" onclick="alert('Funcionalidad en desarrollo')">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-box-open fa-2x mb-3"></i>
+                                        <p class="mb-0">No hay productos en el inventario.</p>
+                                        <button class="btn btn-primary mt-3" onclick="alert('Funcionalidad en desarrollo')">
+                                            <i class="fas fa-plus me-2"></i>Agregar Primer Producto
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if inventories.has_other_pages %}
+            <div class="card-footer">
+                <nav aria-label="Navegación de inventario">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if inventories.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ inventories.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in inventories.paginator.page_range %}
+                        <li class="page-item {% if inventories.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if inventories.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ inventories.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajustar Stock -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adjustStockModalLabel">Ajustar Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustStockForm" method="post" action="#" onsubmit="alert('Funcionalidad en desarrollo'); return false;">
+                    {% csrf_token %}
+                    <input type="hidden" id="product_id" name="product_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Producto</label>
+                        <input type="text" class="form-control" id="product_name" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Stock Actual</label>
+                        <input type="number" class="form-control" id="current_stock" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustment_type" class="form-label">Tipo de Ajuste</label>
+                        <select class="form-select" id="adjustment_type" name="adjustment_type" required>
+                            <option value="add">Agregar al stock actual</option>
+                            <option value="subtract">Restar del stock actual</option>
+                            <option value="set">Establecer nuevo valor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Motivo del Ajuste</label>
+                        <select class="form-select" id="reason" name="reason" required>
+                            <option value="purchase">Compra de mercadería</option>
+                            <option value="sale_return">Devolución de venta</option>
+                            <option value="loss">Pérdida o daño</option>
+                            <option value="correction">Corrección de inventario</option>
+                            <option value="initial">Stock inicial</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notas (opcional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="adjustStockForm" class="btn btn-primary">Guardar Ajuste</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Importar Inventario -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Importar Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" method="post" action="#" enctype="multipart/form-data" onsubmit="alert('Funcionalidad en desarrollo'); return false;">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="import_file" class="form-label">Archivo CSV o Excel</label>
+                        <input type="file" class="form-control" id="import_file" name="import_file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        El archivo debe contener las siguientes columnas: código, nombre, categoría, precio, cantidad, nivel_reorden
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="update_existing" name="update_existing" checked>
+                        <label class="form-check-label" for="update_existing">
+                            Actualizar productos existentes
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="importForm" class="btn btn-primary">Importar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal para ajustar stock
+    const adjustStockModal = document.getElementById('adjustStockModal');
+    if (adjustStockModal) {
+        adjustStockModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-product-id');
+            const productName = button.getAttribute('data-product-name');
+            const currentStock = button.getAttribute('data-current-stock');
+            
+            document.getElementById('product_id').value = productId;
+            document.getElementById('product_name').value = productName;
+            document.getElementById('current_stock').value = currentStock;
+        });
+    }
+    
+    // Búsqueda en inventario
+    const searchInput = document.getElementById('searchInventory');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const productInfo = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const code = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                
+                if (productInfo.includes(searchTerm) || category.includes(searchTerm) || code.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Filtros
+    const filterLinks = document.querySelectorAll('[data-filter], [data-filter-category]');
+    filterLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const filter = this.getAttribute('data-filter');
+            const categoryFilter = this.getAttribute('data-filter-category');
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (filter === 'all') {
+                    row.style.display = '';
+                } else if (filter === 'low-stock') {
+                    const stock = parseInt(row.getAttribute('data-stock'));
+                    row.style.display = stock > 0 && stock <= 5 ? '' : 'none';
+                } else if (filter === 'no-stock') {
+                    const stock = parseInt(row.getAttribute('data-stock'));
+                    row.style.display = stock <= 0 ? '' : 'none';
+                } else if (categoryFilter) {
+                    const category = row.getAttribute('data-category');
+                    row.style.display = category === categoryFilter ? '' : 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

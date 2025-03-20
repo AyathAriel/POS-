@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo #{{ sale.reference }} - POS System</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            margin: 0;
+            padding: 0;
+            width: 80mm;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .fw-bold {
+            font-weight: bold;
+        }
+        
+        .mb-1 {
+            margin-bottom: 0.25rem;
+        }
+        
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+        
+        .d-flex {
+            display: flex;
+        }
+        
+        .justify-content-between {
+            justify-content: space-between;
+        }
+        
+        .border-top {
+            border-top: 1px dashed #000;
+            padding-top: 0.5rem;
+        }
+        
+        .border-bottom {
+            border-bottom: 1px dashed #000;
+            padding-bottom: 0.5rem;
+        }
+        
+        .px-2 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.25rem;
+        }
+        
+        .header, .footer {
+            text-align: center;
+        }
+        
+        @media print {
+            body {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="padding: 1rem; text-align: center; background-color: #f8f9fa;">
+        <button onclick="window.print();" style="padding: 0.5rem 1rem; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Imprimir Recibo
+        </button>
+        <a href="{% url 'pos:sale_detail' sale.id %}" style="margin-left: 1rem; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border: none; border-radius: 4px; text-decoration: none;">
+            Volver
+        </a>
+    </div>
+
+    <div class="receipt" style="padding: 0.5rem;">
+        <div class="header mb-3">
+            <h1 class="text-center mb-1" style="font-size: 16px;">{{ company_name|default:"POS SYSTEM" }}</h1>
+            <p class="text-center mb-1">{{ company_address|default:"Dirección de la empresa" }}</p>
+            <p class="text-center mb-1">Tel: {{ company_phone|default:"123-456-7890" }}</p>
+            <p class="text-center">NIF/CIF: {{ company_tax_id|default:"A12345678" }}</p>
+        </div>
+        
+        <div class="border-top border-bottom mb-2">
+            <div class="d-flex justify-content-between mb-1">
+                <span>RECIBO #:</span>
+                <span>{{ sale.reference }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>FECHA:</span>
+                <span>{{ sale.date|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>VENDEDOR:</span>
+                <span>{{ sale.user.get_full_name|default:sale.user.username }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>CLIENTE:</span>
+                <span>{{ sale.customer.name|default:"Cliente General" }}</span>
+            </div>
+        </div>
+        
+        <table class="mb-3">
+            <thead>
+                <tr>
+                    <th class="text-left">PRODUCTO</th>
+                    <th class="text-right">CANT</th>
+                    <th class="text-right">PRECIO</th>
+                    <th class="text-right">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items.all %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">${{ item.price|floatformat:2 }}</td>
+                    <td class="text-right">${{ item.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="border-top mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>SUBTOTAL:</span>
+                <span>${{ sale.total|floatformat:2 }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>IVA ({{ tax_rate|default:"21" }}%):</span>
+                <span>${{ tax_amount|default:"0.00"|floatformat:2 }}</span>
+            </div>
+            <div class="d-flex justify-content-between fw-bold">
+                <span>TOTAL:</span>
+                <span>${{ grand_total|default:sale.total|floatformat:2 }}</span>
+            </div>
+        </div>
+        
+        <div class="border-top mb-3 px-2">
+            <div class="mb-1">
+                <span>MÉTODO DE PAGO:</span>
+                <span>{{ sale.get_payment_method_display }}</span>
+            </div>
+            {% if sale.notes %}
+            <div class="mb-1">
+                <span>NOTAS:</span>
+                <p>{{ sale.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p class="text-center mb-1">¡Gracias por su compra!</p>
+            <p class="text-center mb-1">Visite nuestra web: {{ company_website|default:"www.posystem.com" }}</p>
+            <p class="text-center">{{ footer_message|default:"Este recibo sirve como comprobante de compra." }}</p>
+        </div>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            // Auto print on page load if not coming from print dialog
+            if (!window.matchMedia('print').matches) {
+                window.setTimeout(function() {
+                    window.print();
+                }, 500);
+            }
+        };
+    </script>
+</body>
+</html> 

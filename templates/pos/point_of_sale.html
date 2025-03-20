@@ -1,0 +1,656 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Punto de Venta | POS System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-item {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        overflow: hidden;
+    }
+    
+    .product-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-image {
+        height: 100px;
+        width: 100%;
+        object-fit: cover;
+    }
+    
+    .product-search {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-grid {
+        height: calc(100vh - 300px);
+        overflow-y: auto;
+    }
+    
+    .cart-container {
+        height: calc(100vh - 260px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .cart-items {
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    
+    .cart-item {
+        border-left: 3px solid #3498db;
+    }
+    
+    .cart-summary {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        padding: 15px;
+    }
+    
+    .category-pills {
+        margin-bottom: 15px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 5px;
+    }
+    
+    .category-pills .nav-link {
+        margin-right: 5px;
+    }
+    
+    .cart-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+    }
+    
+    .quantity-control {
+        width: 30px;
+        text-align: center;
+        border: none;
+        background: transparent;
+    }
+    
+    .cart-item-price {
+        min-width: 80px;
+        text-align: right;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        visibility: hidden;
+    }
+    
+    .loading-overlay.active {
+        visibility: visible;
+    }
+</style>
+{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-outline-success" id="newSaleBtn">
+    <i class="fas fa-plus-circle me-2"></i>Nueva Venta
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3">Punto de Venta</h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Products Panel -->
+    <div class="col-lg-8">
+        <div class="card product-search mb-3">
+            <div class="card-body p-2">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="productSearch" placeholder="Buscar producto por nombre o código de barras">
+                    <button class="btn btn-primary" id="barcodeBtn" type="button">
+                        <i class="fas fa-barcode"></i>
+                    </button>
+                </div>
+                
+                <div class="category-pills mt-3">
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-category="all">Todos</a>
+                        </li>
+                        {% for category in categories %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="{{ category.id }}">{{ category.name }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-grid">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" id="productGrid">
+                {% for product in products %}
+                <div class="col product-container" data-category="{{ product.category.id|default:'0' }}" data-price="{{ product.sale_price }}" data-id="{{ product.id }}">
+                    <div class="card h-100 product-item">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" class="card-img-top product-image" alt="{{ product.name }}">
+                        {% else %}
+                        <div class="card-img-top product-image bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-box fa-2x text-secondary"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">{{ product.name }}</h6>
+                            <p class="card-text text-primary fw-bold mb-0">${{ product.sale_price|floatformat:2 }}</p>
+                            <small class="text-muted">Stock: {{ product.current_stock }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Panel -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>Carrito de Compra
+                </h5>
+            </div>
+            <div class="cart-container">
+                <div class="cart-items" id="cartItems">
+                    <div class="cart-empty">
+                        <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                        <p>El carrito está vacío</p>
+                        <p class="small text-muted">Agrega productos haciendo clic en ellos</p>
+                    </div>
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>IVA (16%):</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold fs-5">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <button class="btn btn-success btn-lg" id="checkoutBtn" disabled>
+                            <i class="fas fa-cash-register me-2"></i>Procesar Venta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="checkoutModalLabel">Completar Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-7">
+                        <h5 class="mb-3">Resumen de compra</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-end">Precio</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="checkoutItemsList">
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Subtotal:</th>
+                                        <th class="text-end" id="checkoutSubtotal">$0.00</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-end">IVA (16%):</th>
+                                        <th class="text-end" id="checkoutTax">$0.00</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total:</th>
+                                        <th class="text-end" id="checkoutTotal">$0.00</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <h5 class="mb-3">Información de pago</h5>
+                        <form id="paymentForm">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="customerSelect" class="form-label">Cliente</label>
+                                <select class="form-select" id="customerSelect" name="customer">
+                                    <option value="">Cliente general</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="paymentMethod" class="form-label">Método de pago</label>
+                                <select class="form-select" id="paymentMethod" name="payment_method" required>
+                                    <option value="cash">Efectivo</option>
+                                    <option value="card">Tarjeta</option>
+                                    <option value="transfer">Transferencia</option>
+                                </select>
+                            </div>
+                            
+                            <div id="cashPaymentSection">
+                                <div class="mb-3">
+                                    <label for="amountReceived" class="form-label">Monto recibido</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="amountReceived" min="0" step="0.01">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="changeAmount" class="form-label">Cambio</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" id="changeAmount" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="saleNotes" class="form-label">Notas</label>
+                                <textarea class="form-control" id="saleNotes" name="notes" rows="2"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="completePaymentBtn">
+                    <i class="fas fa-check-circle me-2"></i>Completar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Globals
+        let cart = [];
+        const TAX_RATE = 0.16;
+        
+        // DOM Elements
+        const productGrid = document.getElementById('productGrid');
+        const productSearch = document.getElementById('productSearch');
+        const cartItems = document.getElementById('cartItems');
+        const subtotalElement = document.getElementById('subtotal');
+        const taxElement = document.getElementById('tax');
+        const totalElement = document.getElementById('total');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+        const checkoutItemsList = document.getElementById('checkoutItemsList');
+        const checkoutSubtotal = document.getElementById('checkoutSubtotal');
+        const checkoutTax = document.getElementById('checkoutTax');
+        const checkoutTotal = document.getElementById('checkoutTotal');
+        const paymentMethod = document.getElementById('paymentMethod');
+        const cashPaymentSection = document.getElementById('cashPaymentSection');
+        const amountReceived = document.getElementById('amountReceived');
+        const changeAmount = document.getElementById('changeAmount');
+        const completePaymentBtn = document.getElementById('completePaymentBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const newSaleBtn = document.getElementById('newSaleBtn');
+        
+        // Initialize
+        updateCart();
+        
+        // Category filter
+        document.querySelectorAll('.category-pills .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active class
+                document.querySelectorAll('.category-pills .nav-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                filterProducts(category);
+            });
+        });
+        
+        // Product search
+        productSearch.addEventListener('input', function() {
+            const searchValue = this.value.toLowerCase();
+            const productItems = productGrid.querySelectorAll('.product-container');
+            
+            productItems.forEach(item => {
+                const productName = item.querySelector('.card-title').textContent.toLowerCase();
+                
+                if (productName.includes(searchValue)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Add product to cart when clicked
+        productGrid.addEventListener('click', function(e) {
+            const productItem = e.target.closest('.product-item');
+            
+            if (productItem) {
+                const productContainer = productItem.closest('.product-container');
+                const productId = productContainer.getAttribute('data-id');
+                const productName = productContainer.querySelector('.card-title').textContent;
+                const productPrice = parseFloat(productContainer.getAttribute('data-price'));
+                
+                addToCart(productId, productName, productPrice);
+            }
+        });
+        
+        // Handle checkout button
+        checkoutBtn.addEventListener('click', function() {
+            prepareCheckoutModal();
+            checkoutModal.show();
+        });
+        
+        // Payment method change
+        paymentMethod.addEventListener('change', function() {
+            if (this.value === 'cash') {
+                cashPaymentSection.style.display = 'block';
+            } else {
+                cashPaymentSection.style.display = 'none';
+            }
+        });
+        
+        // Calculate change
+        amountReceived.addEventListener('input', function() {
+            const received = parseFloat(this.value) || 0;
+            const total = getTotal();
+            const change = received - total;
+            
+            changeAmount.value = change >= 0 ? change.toFixed(2) : '0.00';
+        });
+        
+        // Complete sale
+        completePaymentBtn.addEventListener('click', function() {
+            if (validatePayment()) {
+                processSale();
+            }
+        });
+        
+        // New sale button
+        newSaleBtn.addEventListener('click', function() {
+            if (cart.length > 0) {
+                if (confirm('¿Deseas cancelar la venta actual e iniciar una nueva?')) {
+                    clearCart();
+                }
+            }
+        });
+        
+        // Functions
+        function addToCart(id, name, price) {
+            const existingItem = cart.find(item => item.id === id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            updateCart();
+        }
+        
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCart();
+        }
+        
+        function updateItemQuantity(id, quantity) {
+            const item = cart.find(item => item.id === id);
+            
+            if (item) {
+                item.quantity = Math.max(1, quantity);
+                updateCart();
+            }
+        }
+        
+        function updateCart() {
+            if (cart.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="cart-empty">
+                        <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                        <p>El carrito está vacío</p>
+                        <p class="small text-muted">Agrega productos haciendo clic en ellos</p>
+                    </div>
+                `;
+                checkoutBtn.disabled = true;
+            } else {
+                let cartHTML = '';
+                
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    
+                    cartHTML += `
+                        <div class="list-group-item cart-item">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-0">${item.name}</h6>
+                                <button type="button" class="btn-close" onclick="removeFromCart('${item.id}')"></button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="input-group input-group-sm" style="max-width: 120px;">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="updateItemQuantity('${item.id}', ${item.quantity - 1})">-</button>
+                                    <input type="text" class="form-control text-center" value="${item.quantity}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="updateItemQuantity('${item.id}', ${item.quantity + 1})">+</button>
+                                </div>
+                                <div class="cart-item-price">
+                                    <div class="text-muted small">$${item.price.toFixed(2)} c/u</div>
+                                    <div class="fw-bold">$${itemTotal.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                cartItems.innerHTML = `<div class="list-group list-group-flush">${cartHTML}</div>`;
+                checkoutBtn.disabled = false;
+            }
+            
+            updateTotals();
+        }
+        
+        function updateTotals() {
+            const subtotal = getSubtotal();
+            const tax = subtotal * TAX_RATE;
+            const total = subtotal + tax;
+            
+            subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+            taxElement.textContent = `$${tax.toFixed(2)}`;
+            totalElement.textContent = `$${total.toFixed(2)}`;
+        }
+        
+        function getSubtotal() {
+            return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+        
+        function getTotal() {
+            return getSubtotal() * (1 + TAX_RATE);
+        }
+        
+        function prepareCheckoutModal() {
+            let itemsHTML = '';
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                
+                itemsHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-end">$${item.price.toFixed(2)}</td>
+                        <td class="text-end">$${itemTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            checkoutItemsList.innerHTML = itemsHTML;
+            
+            const subtotal = getSubtotal();
+            const tax = subtotal * TAX_RATE;
+            const total = subtotal + tax;
+            
+            checkoutSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+            checkoutTax.textContent = `$${tax.toFixed(2)}`;
+            checkoutTotal.textContent = `$${total.toFixed(2)}`;
+            
+            // Reset payment form
+            document.getElementById('paymentForm').reset();
+            cashPaymentSection.style.display = 'block';
+            amountReceived.value = '';
+            changeAmount.value = '';
+        }
+        
+        function validatePayment() {
+            if (paymentMethod.value === 'cash') {
+                const received = parseFloat(amountReceived.value) || 0;
+                const total = getTotal();
+                
+                if (received < total) {
+                    alert('El monto recibido debe ser igual o mayor al total de la venta.');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        function processSale() {
+            // Show loading overlay
+            loadingOverlay.classList.add('active');
+            
+            const saleData = {
+                items: cart.map(item => ({
+                    product_id: item.id,
+                    quantity: item.quantity,
+                    price: item.price
+                })),
+                customer: document.getElementById('customerSelect').value,
+                payment_method: paymentMethod.value,
+                notes: document.getElementById('saleNotes').value
+            };
+            
+            // In a real application, you would send this data to the server
+            fetch('{% url "pos:process_sale" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(saleData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al procesar la venta');
+                }
+                return response.json();
+            })
+            .then(data => {
+                checkoutModal.hide();
+                clearCart();
+                alert('Venta completada con éxito. Factura #: ' + data.invoice_number);
+                
+                // Optionally redirect to receipt page
+                // window.location.href = `/pos/receipt/${data.sale_id}/`;
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            })
+            .finally(() => {
+                loadingOverlay.classList.remove('active');
+            });
+        }
+        
+        function clearCart() {
+            cart = [];
+            updateCart();
+        }
+        
+        function filterProducts(category) {
+            const productItems = productGrid.querySelectorAll('.product-container');
+            
+            productItems.forEach(item => {
+                if (category === 'all' || item.getAttribute('data-category') === category) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Expose functions to window for HTML onclick
+        window.removeFromCart = removeFromCart;
+        window.updateItemQuantity = updateItemQuantity;
+    });
+</script>
+{% endblock %} 

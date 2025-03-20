@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ supplier.name }} | POS System{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:supplier_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver a Proveedores
+</a>
+<a href="{% url 'pos:supplier_edit' supplier.id %}" class="btn btn-primary ms-2">
+    <i class="fas fa-edit me-2"></i>Editar Proveedor
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">{{ supplier.name }}</h1>
+        <p class="text-muted">Detalles y estadísticas del proveedor.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Información del Proveedor</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    {% if supplier.logo %}
+                    <img src="{{ supplier.logo.url }}" alt="{{ supplier.name }}" class="img-thumbnail mb-3" style="max-width: 200px;">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center mb-3" style="width: 200px; height: 200px; margin: 0 auto;">
+                        <i class="fas fa-truck text-secondary" style="font-size: 64px;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <h5 class="mb-1">{{ supplier.name }}</h5>
+                    <p class="text-muted mb-0">{{ supplier.tax_id|default:"-" }}</p>
+                </div>
+                
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Contacto:</span>
+                        <span>{{ supplier.contact_person|default:"-" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Email:</span>
+                        <span>{{ supplier.email|default:"-" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Teléfono:</span>
+                        <span>{{ supplier.phone|default:"-" }}</span>
+                    </li>
+                    {% if supplier.address %}
+                    <li class="list-group-item">
+                        <span class="text-muted">Dirección:</span>
+                        <p class="mb-0 mt-1">{{ supplier.address }}</p>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Estadísticas</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total Compras:</span>
+                        <span class="badge bg-primary rounded-pill">{{ supplier.purchases.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Última Compra:</span>
+                        <span>{{ supplier.last_purchase_date|date:"d/m/Y"|default:"-" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total Gastado:</span>
+                        <span>${{ supplier.total_spent|floatformat:2 }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Promedio por Compra:</span>
+                        <span>${{ supplier.average_purchase|floatformat:2 }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Historial de Compras</h5>
+                    <a href="{% url 'pos:purchase_create' %}?supplier={{ supplier.id }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Nueva Compra
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Referencia</th>
+                                <th>Fecha</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in supplier.purchases.all %}
+                            <tr>
+                                <td>{{ purchase.reference }}</td>
+                                <td>{{ purchase.date|date:"d/m/Y" }}</td>
+                                <td>{{ purchase.items.count }}</td>
+                                <td>${{ purchase.total|floatformat:2 }}</td>
+                                <td>
+                                    {% if purchase.status == 'completed' %}
+                                    <span class="badge bg-success">Completada</span>
+                                    {% elif purchase.status == 'pending' %}
+                                    <span class="badge bg-warning">Pendiente</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ purchase.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'pos:purchase_detail' purchase.id %}" class="btn btn-outline-primary" title="Ver Detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'pos:purchase_edit' purchase.id %}" class="btn btn-outline-secondary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-shopping-cart fa-2x mb-3"></i>
+                                        <p class="mb-0">No hay compras registradas.</p>
+                                        <a href="{% url 'pos:purchase_create' %}?supplier={{ supplier.id }}" class="btn btn-primary mt-3">
+                                            <i class="fas fa-plus me-2"></i>Registrar Primera Compra
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% if supplier.notes %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Notas</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ supplier.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if user.is_staff %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Acciones Administrativas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSupplierModal">
+                        <i class="fas fa-trash me-2"></i>Eliminar Proveedor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Proveedor -->
+<div class="modal fade" id="deleteSupplierModal" tabindex="-1" aria-labelledby="deleteSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteSupplierModalLabel">Eliminar Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro de que deseas eliminar al proveedor <strong>{{ supplier.name }}</strong>?</p>
+                <p>Al eliminar el proveedor:</p>
+                <ul>
+                    <li>Se eliminará toda la información del proveedor</li>
+                    <li>Se mantendrá el historial de compras</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'pos:supplier_delete' supplier.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

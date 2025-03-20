@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if purchase %}Editar{% else %}Nueva{% endif %} Compra | POS System{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pos:purchase_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver a Compras
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">{% if purchase %}Editar{% else %}Nueva{% endif %} Compra</h1>
+        <p class="text-muted">Registre una nueva compra para actualizar el inventario.</p>
+    </div>
+</div>
+
+<form method="post" action="">
+    {% csrf_token %}
+    
+    {% if form.errors %}
+    <div class="alert alert-danger" role="alert">
+        <h5 class="alert-heading">Error al guardar</h5>
+        <p class="mb-0">Por favor corrija los errores indicados a continuación.</p>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Productos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <label for="product-select" class="form-label">Seleccionar Producto</label>
+                                <select id="product-select" class="form-select product-select">
+                                    <option value="">Buscar producto...</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" 
+                                            data-name="{{ product.name }}"
+                                            data-price="{{ product.cost_price }}">
+                                        {{ product.name }} ({{ product.barcode|default:"Sin código" }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-lg-3 mb-3">
+                                <label for="product-quantity" class="form-label">Cantidad</label>
+                                <input type="number" id="product-quantity" class="form-control" min="1" value="1">
+                            </div>
+                            <div class="col-lg-3 mb-3">
+                                <label for="product-price" class="form-label">Precio de Compra</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" id="product-price" class="form-control" step="0.01" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="button" id="add-product-btn" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Agregar Producto
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="purchase-items-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Subtotal</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if purchase %}
+                                {% for item in purchase.items.all %}
+                                <tr data-product-id="{{ item.product.id }}">
+                                    <td>{{ item.product.name }}</td>
+                                    <td class="text-end">${{ item.price|floatformat:2 }}</td>
+                                    <td class="text-end">{{ item.quantity }}</td>
+                                    <td class="text-end">${{ item.subtotal|floatformat:2 }}</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-danger remove-item">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th class="text-end" id="total-amount">
+                                        ${{ purchase.total|default:"0.00"|floatformat:2 }}
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div id="items-container">
+                        {% if purchase %}
+                        {% for item in purchase.items.all %}
+                        <input type="hidden" name="product_ids[]" value="{{ item.product.id }}">
+                        <input type="hidden" name="quantities[]" value="{{ item.quantity }}">
+                        <input type="hidden" name="prices[]" value="{{ item.price }}">
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Información de la Compra</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.reference.id_for_label }}" class="form-label">Referencia</label>
+                        {{ form.reference|add_class:"form-control" }}
+                        {% if form.reference.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.reference.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Número de factura o referencia del proveedor.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.supplier.id_for_label }}" class="form-label">Proveedor</label>
+                        {{ form.supplier|add_class:"form-select supplier-select" }}
+                        {% if form.supplier.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.supplier.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.date.id_for_label }}" class="form-label">Fecha</label>
+                        {{ form.date|add_class:"form-control" }}
+                        {% if form.date.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.date.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Estado</label>
+                        {{ form.status|add_class:"form-select" }}
+                        {% if form.status.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.status.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notas</label>
+                        {{ form.notes|add_class:"form-control" }}
+                        {% if form.notes.errors %}
+                        <div class="text-danger mt-1">
+                            <small>{{ form.notes.errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'pos:purchase_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Guardar Compra</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('.product-select').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Buscar producto...',
+        allowClear: true
+    });
+    
+    $('.supplier-select').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Seleccionar proveedor',
+        allowClear: true
+    });
+    
+    // Product selection handling
+    $('#product-select').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const price = selectedOption.data('price');
+        
+        if (price) {
+            $('#product-price').val(price);
+        } else {
+            $('#product-price').val('');
+        }
+    });
+    
+    // Add product to purchase
+    $('#add-product-btn').on('click', function() {
+        const productSelect = $('#product-select');
+        const productId = productSelect.val();
+        
+        if (!productId) {
+            alert('Por favor seleccione un producto.');
+            return;
+        }
+        
+        const productName = productSelect.find('option:selected').data('name');
+        const quantity = $('#product-quantity').val();
+        const price = $('#product-price').val();
+        
+        if (!quantity || quantity < 1) {
+            alert('La cantidad debe ser mayor a 0.');
+            return;
+        }
+        
+        if (!price || price <= 0) {
+            alert('El precio debe ser mayor a 0.');
+            return;
+        }
+        
+        // Check if product already exists in table
+        const existingRow = $(`#purchase-items-table tbody tr[data-product-id="${productId}"]`);
+        
+        if (existingRow.length > 0) {
+            // Update existing row
+            const currentQuantity = parseInt(existingRow.find('td:nth-child(3)').text());
+            const newQuantity = currentQuantity + parseInt(quantity);
+            const subtotal = (price * newQuantity).toFixed(2);
+            
+            existingRow.find('td:nth-child(2)').text('$' + parseFloat(price).toFixed(2));
+            existingRow.find('td:nth-child(3)').text(newQuantity);
+            existingRow.find('td:nth-child(4)').text('$' + subtotal);
+            
+            // Update hidden inputs
+            $(`input[name="product_ids[]"][value="${productId}"]`).siblings('input[name="quantities[]"]').val(newQuantity);
+            $(`input[name="product_ids[]"][value="${productId}"]`).siblings('input[name="prices[]"]').val(price);
+        } else {
+            // Add new row
+            const subtotal = (price * quantity).toFixed(2);
+            
+            const newRow = `
+                <tr data-product-id="${productId}">
+                    <td>${productName}</td>
+                    <td class="text-end">$${parseFloat(price).toFixed(2)}</td>
+                    <td class="text-end">${quantity}</td>
+                    <td class="text-end">$${subtotal}</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-danger remove-item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            $('#purchase-items-table tbody').append(newRow);
+            
+            // Add hidden inputs
+            $('#items-container').append(`
+                <input type="hidden" name="product_ids[]" value="${productId}">
+                <input type="hidden" name="quantities[]" value="${quantity}">
+                <input type="hidden" name="prices[]" value="${price}">
+            `);
+        }
+        
+        // Reset form
+        productSelect.val('').trigger('change');
+        $('#product-quantity').val(1);
+        $('#product-price').val('');
+        
+        // Update total
+        updateTotal();
+    });
+    
+    // Remove item
+    $(document).on('click', '.remove-item', function() {
+        const row = $(this).closest('tr');
+        const productId = row.data('product-id');
+        
+        // Remove the row
+        row.remove();
+        
+        // Remove hidden inputs
+        $(`input[name="product_ids[]"][value="${productId}"]`).next('input[name="quantities[]"]').remove();
+        $(`input[name="product_ids[]"][value="${productId}"]`).next('input[name="prices[]"]').remove();
+        $(`input[name="product_ids[]"][value="${productId}"]`).remove();
+        
+        // Update total
+        updateTotal();
+    });
+    
+    // Function to update total
+    function updateTotal() {
+        let total = 0;
+        
+        $('#purchase-items-table tbody tr').each(function() {
+            const subtotalText = $(this).find('td:nth-child(4)').text();
+            const subtotal = parseFloat(subtotalText.replace('$', ''));
+            total += subtotal;
+        });
+        
+        $('#total-amount').text('$' + total.toFixed(2));
+    }
+    
+    // Initial total calculation
+    updateTotal();
+});
+</script>
+{% endblock %} 
