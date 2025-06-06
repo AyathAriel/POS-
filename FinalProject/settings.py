@@ -156,6 +156,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 AUTH_USER_MODEL = 'pos.User'
 
 # Login URL
-LOGIN_URL = '/login/'
+LOGIN_URL = '/pos/login/'
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGOUT_REDIRECT_URL = '/pos/login/'
