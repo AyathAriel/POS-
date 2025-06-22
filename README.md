@@ -10,20 +10,19 @@ Un **Sistema de Punto de Venta (POS)** moderno y completo desarrollado con **Dja
 
 ## 📋 Tabla de Contenidos
 
-- [Características](#-características)
-- [Tecnologías](#-tecnologías)
-- [Instalación](#-instalación)
-- [Configuración](#-configuración)
-- [Uso](#-uso)
-- [API](#-api)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Contribuir](#-contribuir)
-- [Licencia](#-licencia)
-- [Soporte](#-soporte)
+- [✨ Características](#-características)
+- [🛠 Tecnologías](#-tecnologías)
+- [🚀 Instalación](#-instalación)
+- [⚙️ Configuración](#%EF%B8%8F-configuración)
+- [📱 Uso](#-uso)
+- [🏗 Estructura del Proyecto](#-estructura-del-proyecto)
+- [🤝 Contribuir](#-contribuir)
+- [📝 Licencia](#-licencia)
+- [🆘 Soporte](#-soporte)
 
 ## ✨ Características
 
-### 🛒 **Punto de Venta (POS)**
+### 🛒 Punto de Venta (POS)
 - Interfaz intuitiva para procesamiento rápido de ventas
 - Carrito de compras dinámico con actualización en tiempo real
 - Búsqueda rápida de productos por nombre o código de barras
@@ -31,7 +30,7 @@ Un **Sistema de Punto de Venta (POS)** moderno y completo desarrollado con **Dja
 - Impresión automática de recibos
 - Aplicación de descuentos y promociones
 
-### 📦 **Gestión de Inventario**
+### 📦 Gestión de Inventario
 - Control completo de stock con alertas automáticas
 - Gestión de productos con imágenes y códigos de barras
 - Categorización avanzada de productos
@@ -39,7 +38,7 @@ Un **Sistema de Punto de Venta (POS)** moderno y completo desarrollado con **Dja
 - Historial completo de movimientos de inventario
 - Valorización del inventario en tiempo real
 
-### 📊 **Dashboard y Reportes**
+### 📊 Dashboard y Reportes
 - Dashboard ejecutivo con métricas clave
 - Reportes de ventas diarios, semanales y mensuales
 - Gráficos interactivos de tendencias de ventas
@@ -47,25 +46,25 @@ Un **Sistema de Punto de Venta (POS)** moderno y completo desarrollado con **Dja
 - Reportes de inventario y stock bajo
 - Exportación de reportes en PDF y Excel
 
-### 👥 **Gestión de Clientes**
+### 👥 Gestión de Clientes
 - Base de datos completa de clientes
 - Historial de compras por cliente
 - Información de contacto y preferencias
 - Programa de fidelización (próximamente)
 
-### 🏢 **Gestión de Proveedores**
+### 🏢 Gestión de Proveedores
 - Registro detallado de proveedores
 - Historial de compras y pagos
 - Gestión de órdenes de compra
 - Control de facturas y pagos pendientes
 
-### 👤 **Sistema de Usuarios**
+### 👤 Sistema de Usuarios
 - Autenticación segura con roles y permisos
 - Diferentes niveles de acceso (Administrador, Vendedor, Almacenista)
 - Registro de actividades por usuario
 - Perfiles personalizables
 
-### 🔧 **Características Técnicas**
+### 🔧 Características Técnicas
 - Diseño responsive compatible con móviles y tablets
 - Interfaz moderna con Bootstrap 5
 - Base de datos PostgreSQL para alta performance
@@ -292,6 +291,3 @@ python manage.py loaddata backup.json
 <p align="center">
   <strong>¿Te gusta este proyecto? ¡Dale una ⭐!</strong>
 </p>
-
-
- 
