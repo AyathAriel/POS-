@@ -283,7 +283,7 @@ python manage.py loaddata backup.json
 
 ---
 
-**Versión:** 1.0.0  
+**Versión:** 2.0.1  
 **Última actualización:** Diciembre 2025
 
 ---
