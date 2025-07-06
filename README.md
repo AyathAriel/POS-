@@ -292,5 +292,3 @@ python manage.py loaddata backup.json
   <strong>¿Te gusta este proyecto? ¡Dale una ⭐!</strong>
 </p>
 
----
-Prueba de commit.
